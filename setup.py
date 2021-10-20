@@ -9,7 +9,7 @@ with open(path.join(cur_dir, 'requirements.txt'), 'r') as f:
     requirements = f.read().split()
 
 setup(
-    name='lume',
+    name='lume-base',
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
     packages=find_packages(),
