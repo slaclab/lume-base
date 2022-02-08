@@ -537,7 +537,7 @@ class CommandWrapper(Base):
     def input_parser(path):
 =======
     # convert this to class method
-    @classmethod
+    @staticmethod
     @abstractmethod
     def input_parser(cls, path):
 >>>>>>> 68079cf (Convert input_parser to a class method)
