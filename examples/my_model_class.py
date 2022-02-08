@@ -12,8 +12,13 @@ class MyModelClass(CommandWrapper):
 
 
     #implementation of abstract method
+<<<<<<< HEAD
     @staticmethod
     def input_parser(path):
+=======
+    @classmethod
+    def input_parser(cls, path):
+>>>>>>> 68079cf (Convert input_parser to a class method)
         config = {}
 
         if os.path.exists(tools.full_path(path)):
@@ -69,3 +74,9 @@ if __name__ == "__main__":
     print(MyModel._input_image)
     print("Variables:")
     print(MyModel._variables)
+<<<<<<< HEAD
+=======
+
+
+    
+>>>>>>> 68079cf (Convert input_parser to a class method)

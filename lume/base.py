@@ -214,6 +214,7 @@ class Base(ABC):
             if 'input_file' in config:
 
                 # Check that the input file is absolute path...
+                # require absolute/ relative to working dir for model input file
                 f = os.path.expandvars(config['input_file'])
                 if not os.path.isabs(f):
                     # Get the yaml file root
@@ -530,9 +531,16 @@ class CommandWrapper(Base):
         """
         raise NotImplementedError
 
+<<<<<<< HEAD
     @staticmethod
     @abstractmethod
     def input_parser(path):
+=======
+    # convert this to class method
+    @classmethod
+    @abstractmethod
+    def input_parser(cls, path):
+>>>>>>> 68079cf (Convert input_parser to a class method)
         """
         Invoke the specialized input parser and returns the
         input dictionary.
