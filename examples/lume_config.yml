@@ -1,0 +1,4 @@
+input_file: model_config.yml
+use_temp_dir: false
+use_mpi: false
+timeout: 100

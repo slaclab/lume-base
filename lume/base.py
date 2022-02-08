@@ -199,7 +199,7 @@ class Base(ABC):
     @classmethod
     def from_yaml(cls, yaml_file):
         """
-        Returns an Impact object instantiated from a YAML config file
+        Returns an object instantiated from a YAML config file
 
         Will load intial_particles from an h5 file.
 
@@ -209,17 +209,24 @@ class Base(ABC):
             yaml_file = tools.full_path(yaml_file)
             config = yaml.safe_load(open(yaml_file))
 
-            # The input file might be relative to the yaml file
             if 'input_file' in config:
+
+                # require absolute/ relative to working dir for model input file
                 f = os.path.expandvars(config['input_file'])
                 if not os.path.isabs(f):
                     # Get the yaml file root
                     root, _ = os.path.split(tools.full_path(yaml_file))
                     config['input_file'] = os.path.join(root, f)
+                    
+                # Here, we update the config with the input_file contents
+                # provided that the input_parser method has been implemented on the subclass
+                parsed_input = cls.input_parser(config['input_file'])
+                config.update(parsed_input)
 
         else:
             # Try raw string
             config = yaml.safe_load(yaml_file)
+
 
         # Form ParticleGroup from file
         if 'initial_particles' in config:
@@ -484,8 +491,10 @@ class CommandWrapper(Base):
         """
         raise NotImplementedError
 
+    # convert this to class method
+    @classmethod
     @abstractmethod
-    def input_parser(self, path):
+    def input_parser(cls, path):
         """
         Invoke the specialized input parser and returns the
         input dictionary.
