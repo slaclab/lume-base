@@ -530,7 +530,6 @@ class CommandWrapper(Base):
         """
         raise NotImplementedError
 
-    # convert this to class method
     @staticmethod
     @abstractmethod
     def input_parser(cls, path):
