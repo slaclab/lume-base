@@ -213,7 +213,7 @@ class Base(ABC):
 
             if 'input_file' in config:
 
-                # require absolute/ relative to working dir for model input file
+                # Check that the input file is absolute path...
                 f = os.path.expandvars(config['input_file'])
                 if not os.path.isabs(f):
                     # Get the yaml file root
