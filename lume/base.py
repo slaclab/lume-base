@@ -534,7 +534,7 @@ class CommandWrapper(Base):
 
     @classmethod
     @abstractmethod
-    def input_parser(cls, path):
+    def input_parser(path):
         """
         Invoke the specialized input parser and returns the
         input dictionary.
