@@ -69,6 +69,3 @@ if __name__ == "__main__":
     print(MyModel._input_image)
     print("Variables:")
     print(MyModel._variables)
-
-
-    
