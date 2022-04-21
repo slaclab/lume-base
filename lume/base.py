@@ -4,6 +4,8 @@ import tempfile
 import atexit
 import shutil
 import yaml
+from lume.serializers.base import SerializerBase
+from lume.serializers.hdf5 import HDF5Serializer
 
 from pmd_beamphysics import ParticleGroup
 
@@ -433,6 +435,30 @@ class CommandWrapper(Base):
         c = cls()
         c.load_archive(archive_h5)
         return c
+
+    def to_hdf5(self, filename: str) -> None:
+        """Serialize an object to an hdf5 file.
+
+        Parameters
+        ----------
+        filename: str
+        
+        """
+        serializer = HDF5Serializer()
+        serializer.serialize(filename, self)
+
+    @classmethod
+    def from_hdf5(cls, filename: str) -> "Base":
+        """Load an object from and hdf5. 
+
+        Parameters
+        ----------
+        filename: str
+        
+        """
+        serializer = HDF5Serializer()
+        return serializer.deserialize(filename)
+
 
     @abstractmethod
     def plot(self, y=[], x=None, xlim=None, ylim=None, ylim2=None, y2=[], nice=True,
