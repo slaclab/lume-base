@@ -3,7 +3,7 @@ name: Run tests
 on:
   push:
     branches:
-      - 'add-to-hdf5'
+      - 'main'
 
 jobs:
   test:
