@@ -27,7 +27,7 @@ jobs:
         shell: bash -l {0}
         run: |
           conda config --set always_yes yes --set changeps1 no
-          conda install numpy openpmd-beamphysics
-          pip install -r dev-requirements.txt
+          conda install --file requirements.txt
+          conda install --file dev-requirements.txt
           pip install .
           pytest .
