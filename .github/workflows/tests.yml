@@ -1,4 +1,4 @@
-name: Publish Documentation
+name: Run tests
 
 on:
   push:
@@ -6,8 +6,7 @@ on:
       - 'add-to-h5py'
 
 jobs:
-  deploy:
-    if: ${{ github.repository == 'slaclab/lume-base' }}
+  test:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
