@@ -31,7 +31,6 @@ jobs:
           conda install numpy openpmd-beamphysics
           conda install --file requirements.txt
           conda install --file docs-requirements.txt
-          pip install .
       - name: Build Docs
         shell: bash -l {0}
         run: |
