@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from lume.base import Base
 
 
-class ModuleImportError:
+class ModuleImportError(Exception):
     def __init__(self, module_name, module_version):
         self.module_name = module_name
         module_base = module_name.split(".")[0]
@@ -19,7 +19,7 @@ class ModuleImportError:
         super().__init__(self.message)
 
 
-class ClassInitError:
+class ClassInitError(Exception):
     def __init__(self, class_name, module_name, module_version):
         self.module_name = module_name
         self.class_name = class_name
