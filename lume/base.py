@@ -1,7 +1,6 @@
 import os
 import copy
 import tempfile
-import atexit
 import shutil
 import yaml
 from lume.serializers.base import SerializerBase
@@ -585,20 +584,16 @@ class CommandWrapper(Base):
         cleanup : bool
             Whether or not to remove the directory at exit. Defaults to True.
         """
+        
+        if not cleanup:
+            raise NotImplementedError("cleanup option has been removed")
+        
         # Set paths
         if self._use_temp_dir:
             # Need to attach this to the object. Otherwise it will go out of scope.
             self._tempdir = tempfile.TemporaryDirectory(dir=workdir)
             self._base_path = self._tempdir.name
-            if cleanup:
-                atexit.register(self._cleanup_workdir)
+
         else:
             # Work in place
             self._base_path = self.original_path
-
-    def _cleanup_workdir(self):
-        if self._tempdir:
-            try:
-                self._tempdir.cleanup()
-            except OSError:
-                shutil.rmtree(self._tempdir.name, ignore_errors=True)
