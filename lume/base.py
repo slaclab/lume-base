@@ -2,6 +2,7 @@ import os
 import copy
 import tempfile
 import shutil
+import warnings
 import yaml
 from lume.serializers.base import SerializerBase
 from lume.serializers.hdf5 import HDF5Serializer
@@ -594,7 +595,7 @@ class CommandWrapper(Base):
         """
         
         if not cleanup:
-            raise NotImplementedError("cleanup option has been removed")
+             warnings.warn("cleanup option has been removed", DeprecationWarning)
         
         # Set paths
         if self._use_temp_dir:
