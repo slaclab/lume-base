@@ -534,7 +534,7 @@ class CommandWrapper(Base):
         raise NotImplementedError
 
 
-    @classmethod
+    @staticmethod
     @abstractmethod
     def input_parser(path):
         """
