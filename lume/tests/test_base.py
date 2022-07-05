@@ -21,15 +21,6 @@ def test_hdf5(lume_object, tmp_path):
     assert (bj2.input["data"] == lume_object.input["data"]).all()
 
 
-LUME_CONFIG = f"""
-input_file: {INPUT_YAML}
-use_temp_dir: false
-use_mpi: false
-timeout: 100
-"""
-
-
-
 class TestCommandWrapperSubclass:
 
     LUME_CONFIG = f"""
