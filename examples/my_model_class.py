@@ -12,8 +12,8 @@ class MyModelClass(CommandWrapper):
 
 
     #implementation of abstract method
-    @classmethod
-    def input_parser(cls, path):
+    @staticmethod
+    def input_parser(path):
         config = {}
 
         if os.path.exists(tools.full_path(path)):
