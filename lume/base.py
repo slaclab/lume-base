@@ -229,7 +229,9 @@ class Base(ABC):
         else:
             # Try raw string
             config = yaml.safe_load(yaml_file)
-
+            if "input_file" in config:
+                parsed_input = cls.input_parser(config['input_file'])
+                config.update(parsed_input)
 
         # Form ParticleGroup from file
         if 'initial_particles' in config:
