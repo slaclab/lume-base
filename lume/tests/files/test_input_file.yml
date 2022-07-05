@@ -1,0 +1,8 @@
+input_image: test_input_image.npy
+
+variables:
+  variable_1:
+    value: 1
+
+  variable_2:
+    value: 2
