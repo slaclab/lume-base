@@ -1,10 +1,10 @@
 from random import random
-from lume.base import CommandWrapper, tools
+from lume.base import Base, tools
 import os
 import yaml
 import numpy as np
 
-class MyModel(CommandWrapper):
+class MyModel(Base):
     def __init__(self, *args, variables=None, input_image=None, **kwargs):
         super().__init__(*args, **kwargs)
         self._input_image = input_image
