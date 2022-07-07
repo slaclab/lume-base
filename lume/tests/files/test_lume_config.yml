@@ -1,4 +1,3 @@
 input_file: test_input_file.yml
-use_temp_dir: false
-use_mpi: false
 timeout: 100
+verbose: true
