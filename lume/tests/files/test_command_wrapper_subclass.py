@@ -4,7 +4,7 @@ import os
 import yaml
 import numpy as np
 
-class MyModelClass(CommandWrapper):
+class MyModel(CommandWrapper):
     def __init__(self, *args, variables=None, input_image=None, **kwargs):
         super().__init__(*args, **kwargs)
         self._input_image = input_image
@@ -21,7 +21,8 @@ class MyModelClass(CommandWrapper):
             config = yaml.safe_load(open(yaml_file))
 
 
-            # convention for this is that any input file paths are relative the input yaml directory
+            # convention for this is that any input file paths are relative the input 
+            # yaml directory
             if "input_image" in config:
                 
                 # Get the yaml file root
