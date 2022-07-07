@@ -20,20 +20,21 @@ class MyModel(CommandWrapper):
             yaml_file = tools.full_path(path)
             config = yaml.safe_load(open(yaml_file))
 
-
-            # convention for this is that any input file paths are relative the input 
-            # yaml directory
             if "input_image" in config:
-                
-                # Get the yaml file root
-                root, _ = os.path.split(tools.full_path(path))
-                input_image_path = os.path.join(root, config["input_image"])
 
-                if os.path.exists(tools.full_path(input_image_path)):
-                    config["input_image"] = np.load(input_image_path)
+                # check if input image full path provided
+                if os.path.exists(tools.full_path(config["input_image"])):
+                    input_image_path = tools.full_path(config["input_image"])
 
+                # if not a full path, compose path relative to the yaml file directory
                 else:
-                    raise Exception("Unable to resolve input impage path %s", input_image_path)
+                    root, _ = os.path.split(tools.full_path(path))
+                    input_image_path = os.path.join(root, config["input_image"])
+
+                    if not os.path.exists(tools.full_path(input_image_path)):
+                        raise Exception("Unable to resolve input impage path %s", input_image_path)
+
+                config["input_image"] = np.load(input_image_path)
 
         else:
             raise Exception("Unable to parse model input file path %s", path)
