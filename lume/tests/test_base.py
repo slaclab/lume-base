@@ -2,7 +2,7 @@ import lume
 import pytest
 import numpy as np
 from lume.tests.files import INPUT_YAML, LUME_CONFIG_YAML
-from lume.tests.files.test_command_wrapper_subclass import MyModelClass
+from lume.tests.files.test_command_wrapper_subclass import MyModel
 
 def test_input_parser(lume_object, input_file):
     lume_object.input_parser(input_file)
@@ -31,14 +31,14 @@ class TestCommandWrapperSubclass:
     """
 
     def test_load_from_yaml_file(self):
-        model = MyModelClass.from_yaml(LUME_CONFIG_YAML)
+        model = MyModel.from_yaml(LUME_CONFIG_YAML)
         assert isinstance(model._input_image, (np.ndarray,))
         assert model._variables["variable_1"]["value"] == 1
         assert model._variables["variable_2"]["value"] == 2
 
     def test_load_from_yaml(self):
         # already loaded file
-        model = MyModelClass.from_yaml(self.LUME_CONFIG)
+        model = MyModel.from_yaml(self.LUME_CONFIG)
         assert isinstance(model._input_image, (np.ndarray,))
         assert model._variables["variable_1"]["value"] == 1
         assert model._variables["variable_2"]["value"] == 2
