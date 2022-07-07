@@ -30,14 +30,13 @@ class MyModel(CommandWrapper):
                 input_image_path = os.path.join(root, config["input_image"])
 
                 if os.path.exists(tools.full_path(input_image_path)):
-                    with open(input_image_path, "rb") as f:
-                        config["input_image"] = np.load(f)
+                    config["input_image"] = np.load(input_image_path)
 
                 else:
-                    print(f"unable to resolve input impage path {input_image_path}")
+                    raise Exception("Unable to resolve input impage path %s", input_image_path)
 
         else:
-            print(f"unable to parse model input file at {path}")
+            raise Exception("Unable to parse model input file path %s", path)
                 
         return config
 
