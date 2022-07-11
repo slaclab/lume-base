@@ -1043,7 +1043,17 @@
 <span class="normal">286</span>
 <span class="normal">287</span>
 <span class="normal">288</span>
-<span class="normal">289</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Base</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="normal">289</span>
+<span class="normal">290</span>
+<span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span>
+<span class="normal">297</span>
+<span class="normal">298</span>
+<span class="normal">299</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">class</span> <span class="nc">Base</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Base Interface for LUME-compatible code.</span>
 
@@ -1229,7 +1239,7 @@
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">from_yaml</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">yaml_file</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Returns an Impact object instantiated from a YAML config file</span>
+<span class="sd">        Returns an object instantiated from a YAML config file</span>
 
 <span class="sd">        Will load intial_particles from an h5 file.</span>
 
@@ -1239,17 +1249,27 @@
             <span class="n">yaml_file</span> <span class="o">=</span> <span class="n">tools</span><span class="o">.</span><span class="n">full_path</span><span class="p">(</span><span class="n">yaml_file</span><span class="p">)</span>
             <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">yaml_file</span><span class="p">))</span>
 
-            <span class="c1"># The input file might be relative to the yaml file</span>
             <span class="k">if</span> <span class="s1">&#39;input_file&#39;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
+
+                <span class="c1"># Check that the input file is absolute path...</span>
+                <span class="c1"># require absolute/ relative to working dir for model input file</span>
                 <span class="n">f</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expandvars</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;input_file&#39;</span><span class="p">])</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isabs</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
                     <span class="c1"># Get the yaml file root</span>
                     <span class="n">root</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">tools</span><span class="o">.</span><span class="n">full_path</span><span class="p">(</span><span class="n">yaml_file</span><span class="p">))</span>
                     <span class="n">config</span><span class="p">[</span><span class="s1">&#39;input_file&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
 
+                <span class="c1"># Here, we update the config with the input_file contents</span>
+                <span class="c1"># provided that the input_parser method has been implemented on the subclass</span>
+                <span class="n">parsed_input</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">input_parser</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;input_file&#39;</span><span class="p">])</span>
+                <span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">parsed_input</span><span class="p">)</span>
+
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># Try raw string</span>
             <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">yaml_file</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">&quot;input_file&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
+                <span class="n">parsed_input</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">input_parser</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;input_file&#39;</span><span class="p">])</span>
+                <span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">parsed_input</span><span class="p">)</span>
 
         <span class="c1"># Form ParticleGroup from file</span>
         <span class="k">if</span> <span class="s1">&#39;initial_particles&#39;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
@@ -1393,23 +1413,23 @@ If not in informed, a new file is generated.</p></td>
 
       <details class="quote">
         <summary>Source code in <code>lume/base.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">259</span>
-<span class="normal">260</span>
-<span class="normal">261</span>
-<span class="normal">262</span>
-<span class="normal">263</span>
-<span class="normal">264</span>
-<span class="normal">265</span>
-<span class="normal">266</span>
-<span class="normal">267</span>
-<span class="normal">268</span>
-<span class="normal">269</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">269</span>
 <span class="normal">270</span>
 <span class="normal">271</span>
 <span class="normal">272</span>
 <span class="normal">273</span>
 <span class="normal">274</span>
-<span class="normal">275</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@abstractmethod</span>
+<span class="normal">275</span>
+<span class="normal">276</span>
+<span class="normal">277</span>
+<span class="normal">278</span>
+<span class="normal">279</span>
+<span class="normal">280</span>
+<span class="normal">281</span>
+<span class="normal">282</span>
+<span class="normal">283</span>
+<span class="normal">284</span>
+<span class="normal">285</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@abstractmethod</span>
 <span class="k">def</span> <span class="nf">archive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">h5</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Dump inputs and outputs into HDF5 file.</span>
@@ -1726,17 +1746,17 @@ If not in informed, a new file is generated.</p></td>
 
       <details class="quote">
         <summary>Source code in <code>lume/base.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">247</span>
-<span class="normal">248</span>
-<span class="normal">249</span>
-<span class="normal">250</span>
-<span class="normal">251</span>
-<span class="normal">252</span>
-<span class="normal">253</span>
-<span class="normal">254</span>
-<span class="normal">255</span>
-<span class="normal">256</span>
-<span class="normal">257</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">257</span>
+<span class="normal">258</span>
+<span class="normal">259</span>
+<span class="normal">260</span>
+<span class="normal">261</span>
+<span class="normal">262</span>
+<span class="normal">263</span>
+<span class="normal">264</span>
+<span class="normal">265</span>
+<span class="normal">266</span>
+<span class="normal">267</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
 <span class="k">def</span> <span class="nf">from_hdf5</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Base&quot;</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Load an object from and hdf5. </span>
 
@@ -1769,7 +1789,7 @@ If not in informed, a new file is generated.</p></td>
 
   <div class="doc doc-contents ">
   
-      <p>Returns an Impact object instantiated from a YAML config file</p>
+      <p>Returns an object instantiated from a YAML config file</p>
 <p>Will load intial_particles from an h5 file.</p>
 
       <details class="quote">
@@ -1807,10 +1827,20 @@ If not in informed, a new file is generated.</p></td>
 <span class="normal">231</span>
 <span class="normal">232</span>
 <span class="normal">233</span>
-<span class="normal">234</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
+<span class="normal">234</span>
+<span class="normal">235</span>
+<span class="normal">236</span>
+<span class="normal">237</span>
+<span class="normal">238</span>
+<span class="normal">239</span>
+<span class="normal">240</span>
+<span class="normal">241</span>
+<span class="normal">242</span>
+<span class="normal">243</span>
+<span class="normal">244</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@classmethod</span>
 <span class="k">def</span> <span class="nf">from_yaml</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">yaml_file</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Returns an Impact object instantiated from a YAML config file</span>
+<span class="sd">    Returns an object instantiated from a YAML config file</span>
 
 <span class="sd">    Will load intial_particles from an h5 file.</span>
 
@@ -1820,17 +1850,27 @@ If not in informed, a new file is generated.</p></td>
         <span class="n">yaml_file</span> <span class="o">=</span> <span class="n">tools</span><span class="o">.</span><span class="n">full_path</span><span class="p">(</span><span class="n">yaml_file</span><span class="p">)</span>
         <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="nb">open</span><span class="p">(</span><span class="n">yaml_file</span><span class="p">))</span>
 
-        <span class="c1"># The input file might be relative to the yaml file</span>
         <span class="k">if</span> <span class="s1">&#39;input_file&#39;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
+
+            <span class="c1"># Check that the input file is absolute path...</span>
+            <span class="c1"># require absolute/ relative to working dir for model input file</span>
             <span class="n">f</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expandvars</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;input_file&#39;</span><span class="p">])</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isabs</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
                 <span class="c1"># Get the yaml file root</span>
                 <span class="n">root</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">tools</span><span class="o">.</span><span class="n">full_path</span><span class="p">(</span><span class="n">yaml_file</span><span class="p">))</span>
                 <span class="n">config</span><span class="p">[</span><span class="s1">&#39;input_file&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
 
+            <span class="c1"># Here, we update the config with the input_file contents</span>
+            <span class="c1"># provided that the input_parser method has been implemented on the subclass</span>
+            <span class="n">parsed_input</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">input_parser</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;input_file&#39;</span><span class="p">])</span>
+            <span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">parsed_input</span><span class="p">)</span>
+
     <span class="k">else</span><span class="p">:</span>
         <span class="c1"># Try raw string</span>
         <span class="n">config</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">yaml_file</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">&quot;input_file&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
+            <span class="n">parsed_input</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">input_parser</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;input_file&#39;</span><span class="p">])</span>
+            <span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">parsed_input</span><span class="p">)</span>
 
     <span class="c1"># Form ParticleGroup from file</span>
     <span class="k">if</span> <span class="s1">&#39;initial_particles&#39;</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
@@ -2015,19 +2055,19 @@ If not in informed, a new file is generated.</p></td>
 
       <details class="quote">
         <summary>Source code in <code>lume/base.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">277</span>
-<span class="normal">278</span>
-<span class="normal">279</span>
-<span class="normal">280</span>
-<span class="normal">281</span>
-<span class="normal">282</span>
-<span class="normal">283</span>
-<span class="normal">284</span>
-<span class="normal">285</span>
-<span class="normal">286</span>
-<span class="normal">287</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">287</span>
 <span class="normal">288</span>
-<span class="normal">289</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@abstractmethod</span>
+<span class="normal">289</span>
+<span class="normal">290</span>
+<span class="normal">291</span>
+<span class="normal">292</span>
+<span class="normal">293</span>
+<span class="normal">294</span>
+<span class="normal">295</span>
+<span class="normal">296</span>
+<span class="normal">297</span>
+<span class="normal">298</span>
+<span class="normal">299</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="nd">@abstractmethod</span>
 <span class="k">def</span> <span class="nf">load_archive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">h5</span><span class="p">,</span> <span class="n">configure</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Loads input and output from archived h5 file.</span>
@@ -2233,16 +2273,16 @@ for libs such as pandas Dataframes, xarray DataArrays and Dask Arrays.</p>
 
       <details class="quote">
         <summary>Source code in <code>lume/base.py</code></summary>
-        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">236</span>
-<span class="normal">237</span>
-<span class="normal">238</span>
-<span class="normal">239</span>
-<span class="normal">240</span>
-<span class="normal">241</span>
-<span class="normal">242</span>
-<span class="normal">243</span>
-<span class="normal">244</span>
-<span class="normal">245</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">to_hdf5</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <div class="highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">246</span>
+<span class="normal">247</span>
+<span class="normal">248</span>
+<span class="normal">249</span>
+<span class="normal">250</span>
+<span class="normal">251</span>
+<span class="normal">252</span>
+<span class="normal">253</span>
+<span class="normal">254</span>
+<span class="normal">255</span></pre></div></td><td class="code"><div><pre><span></span><code><span class="k">def</span> <span class="nf">to_hdf5</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Serialize an object to an hdf5 file.</span>
 
 <span class="sd">    Parameters</span>
