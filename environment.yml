@@ -1,0 +1,13 @@
+# conda env create -f environment.yml
+name: lume-dev
+channels:
+  - conda-forge
+dependencies:
+  - python=3.9
+  - numpy
+  - openpmd-beamphysics
+  - h5py
+  - pyyaml
+# Developer
+  - pytest
+  - ipykernel
