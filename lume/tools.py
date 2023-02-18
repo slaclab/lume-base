@@ -3,7 +3,15 @@ import json
 import numpy as np
 import os
 import shutil
+import datetime
+import subprocess
 
+
+
+"""UTC to ISO 8601 with Local TimeZone information without microsecond"""
+def isotime():
+    return datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc).astimezone().replace(microsecond=0).isoformat()    
+    
 
 class NpEncoder(json.JSONEncoder):
     """
@@ -66,6 +74,14 @@ def full_path(path):
     return os.path.abspath(os.path.expanduser(os.path.expandvars(path)))
 
 
+def native_type(value):
+    """
+    Converts a numpy type to a native python type.
+    See:
+    https://stackoverflow.com/questions/9452775/converting-numpy-dtypes-to-native-python-types/11389998
+    """
+    return getattr(value, 'tolist', lambda: value)()   
+
 def make_executable(path):
     """
     Makes a file executable.
@@ -110,3 +126,46 @@ def find_executable(exename=None, envname=None):
         return full_path(bin_location)
 
     raise ValueError(f'Could not find executable: exename={exename}, envname={envname}')
+    
+    
+def execute(cmd, cwd=None):
+    """
+    
+    Constantly print Subprocess output while process is running
+    from: https://stackoverflow.com/questions/4417546/constantly-print-subprocess-output-while-process-is-running
+    
+    # Example usage:
+        for path in execute(["locate", "a"]):
+        print(path, end="")
+        
+    Useful in Jupyter notebook
+    
+    """
+    popen = subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True, cwd=cwd)
+    for stdout_line in iter(popen.stdout.readline, ""):
+        yield stdout_line 
+    popen.stdout.close()
+    return_code = popen.wait()
+    if return_code:
+        raise subprocess.CalledProcessError(return_code, cmd)
+        
+# Alternative execute
+def execute2(cmd, timeout=None, cwd=None):
+    """
+    Execute with time limit (timeout) in seconds, catching run errors. 
+    """
+    
+    output = {'error':True, 'log':''}
+    try:
+        p = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, timeout = timeout, cwd=cwd)
+      #  p = subprocess.run(' '.join(cmd), shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True, timeout = timeout)
+        output['log'] = p.stdout
+        output['error'] = False
+        output['why_error'] =''
+    except subprocess.TimeoutExpired as ex:
+        output['log'] = ex.stdout+'\n'+str(ex)
+        output['why_error'] = 'timeout'
+    except:
+        output['log'] = 'unknown run error'
+        output['why_error'] = 'unknown'
+    return output    
