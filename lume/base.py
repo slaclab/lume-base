@@ -199,7 +199,7 @@ class Base(ABC):
             print(*args, **kwargs)
 
     @classmethod
-    def from_yaml(cls, yaml_file):
+    def from_yaml(cls, yaml_file, parse_input=False):
         """
         Returns an object instantiated from a YAML config file
 
@@ -223,13 +223,15 @@ class Base(ABC):
                     
                 # Here, we update the config with the input_file contents
                 # provided that the input_parser method has been implemented on the subclass
-                parsed_input = cls.input_parser(config['input_file'])
-                config.update(parsed_input)
+                if parse_input:
+                    parsed_input = cls.input_parser(config['input_file'])
+                    config.update(parsed_input)
+                    
 
         else:
             # Try raw string
             config = yaml.safe_load(yaml_file)
-            if "input_file" in config:
+            if parse_input and "input_file" in config:
                 parsed_input = cls.input_parser(config['input_file'])
                 config.update(parsed_input)
 
@@ -586,9 +588,26 @@ class CommandWrapper(Base):
             self._base_path = None
             self._configured = False
 
+
+    @property 
+    def workdir(self):
+        """
+        Get or set the working directory
+        """
+        return self._workdir
+
+    @workdir.setter
+    def workdir(self, workdir):
+        workdir = full_path(workdir)
+        self.setup_workdir(workdir)
+
+
     def setup_workdir(self, workdir, cleanup=True):
         """
         Set up the work directory if `use_temp_dir` is set.
+
+        workdir and use_temp_dir: Set up temorary directory inside workor
+        workdif 
 
         Parameters
         ----------
@@ -606,7 +625,8 @@ class CommandWrapper(Base):
             # Need to attach this to the object. Otherwise it will go out of scope.
             self._tempdir = tempfile.TemporaryDirectory(dir=workdir)
             self._base_path = self._tempdir.name
-
+        elif workdir:
+            self._base_path = workdir
         else:
             # Work in place
             self._base_path = self.original_path
