@@ -16,6 +16,8 @@ theme:
   name: material
   features:
     - navigation.top
+    - navigation.tabs
+    - navigation.indexes
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
