@@ -606,8 +606,7 @@ class CommandWrapper(Base):
         """
         Set up the work directory if `use_temp_dir` is set.
 
-        workdir and use_temp_dir: Set up temorary directory inside workor
-        workdif 
+        workdir and use_temp_dir: Set up temorary directory inside workdir
 
         Parameters
         ----------
