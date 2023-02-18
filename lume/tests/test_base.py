@@ -31,14 +31,14 @@ class TestCommandWrapperSubclass:
     """
 
     def test_load_from_yaml_file(self):
-        model = MyModel.from_yaml(LUME_CONFIG_YAML)
+        model = MyModel.from_yaml(LUME_CONFIG_YAML, parse_input=True)
         assert isinstance(model._input_image, (np.ndarray,))
         assert model._variables["variable_1"]["value"] == 1
         assert model._variables["variable_2"]["value"] == 2
 
     def test_load_from_yaml(self):
         # already loaded file
-        model = MyModel.from_yaml(self.LUME_CONFIG)
+        model = MyModel.from_yaml(self.LUME_CONFIG, parse_input=True)
         assert isinstance(model._input_image, (np.ndarray,))
         assert model._variables["variable_1"]["value"] == 1
         assert model._variables["variable_2"]["value"] == 2
