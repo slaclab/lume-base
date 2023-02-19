@@ -14,6 +14,7 @@ theme:
   icon:
     repo: fontawesome/brands/github
   name: material
+  custom_dir: overrides
   features:
     - navigation.top
     - navigation.tabs
