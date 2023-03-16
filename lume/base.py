@@ -354,7 +354,7 @@ class CommandWrapper(Base):
 
         self._tempdir = None
         self._use_temp_dir = use_temp_dir
-        self._workdir = workdir or WORKDIR
+        self._workdir = workdir or self.WORKDIR
 
         self._base_path = None
 
