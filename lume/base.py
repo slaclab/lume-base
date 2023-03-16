@@ -336,6 +336,7 @@ class CommandWrapper(Base):
     COMMAND = ""
     COMMAND_MPI = ""
     MPI_RUN = "mpirun -n {nproc} {command_mpi}"
+    WORKDIR = None
 
     def __init__(
             self, input_file=None, *, initial_particles=None,
@@ -353,7 +354,7 @@ class CommandWrapper(Base):
 
         self._tempdir = None
         self._use_temp_dir = use_temp_dir
-        self._workdir = workdir
+        self._workdir = workdir or WORKDIR
 
         self._base_path = None
 
