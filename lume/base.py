@@ -599,7 +599,7 @@ class CommandWrapper(Base):
 
     @workdir.setter
     def workdir(self, workdir):
-        workdir = full_path(workdir)
+        workdir = tools.full_path(workdir)
         self.setup_workdir(workdir)
 
 
