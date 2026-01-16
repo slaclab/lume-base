@@ -8,6 +8,7 @@ dependencies:
   - openpmd-beamphysics
   - h5py
   - pyyaml
+  - pydantic
 # Developer
   - pytest
   - ipykernel
