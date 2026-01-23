@@ -30,6 +30,7 @@ class Variable(BaseModel, ABC):
     """
 
     name: str
+    is_settable: Optional[bool] = False
 
     @property
     @abstractmethod
@@ -65,7 +66,6 @@ class ScalarVariable(Variable):
     default_value: Optional[float] = None
     is_constant: Optional[bool] = False
     value_range: Optional[tuple[float, float]] = None
-    is_settable: Optional[bool] = True
     # tolerance for floating point errors, currently only used for constant variables
     value_range_tolerance: Optional[float] = 1e-8
     unit: Optional[str] = None

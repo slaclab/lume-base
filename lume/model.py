@@ -6,14 +6,12 @@ from lume.variables import Variable
 class LUMEModel(ABC):
     """
     Abstract base class for creating virtual accelerator models and digital twins.
-    Simulation specific implementations should inherit from this class and implement 
-    the abstract methods. Virtual accelerator models that require multiple simulation 
-    types can also inherit from this class and utilize composition to manage multiple 
+    Simulation specific implementations should inherit from this class and implement
+    the abstract methods. Virtual accelerator models that require multiple simulation
+    types can also inherit from this class and utilize composition to manage multiple
     simulators.
 
     Attributes:
-        simulator: The underlying simulator instance used for the model.
-        cached_values: A dictionary to cache measurements/state from the simulator.
         supported_variables: A dictionary of Variable instances that the model supports.
 
     Methods:
@@ -27,14 +25,18 @@ class LUMEModel(ABC):
             Reset the simulator to its initial state.
 
         supported_variables() -> dict[str, Variable]:
-            Return a dict of variables supported by the model. Keys of this dict 
+            Return a dict of variables supported by the model. Keys of this dict
             should be valid keys for get() and set() methods.
     """
-    def __init__(self, simulator, supported_variables: dict[str, Variable]) -> None:
-        self.simulator = simulator
-        self.cached_values = {}
+
+    def __init__(self, supported_variables: dict[str, Variable]) -> None:
+        """
+        Initialize the LUMEModel with supported variables.
+
+        Args:
+            supported_variables: A dictionary of Variable instances that the model supports.
+        """
         self._supported_variables = supported_variables
-        self.reset()
 
     def get(self, names: list[str]) -> dict[str, Any]:
         """
@@ -49,13 +51,26 @@ class LUMEModel(ABC):
             Dictionary of variable names and their corresponding values.
 
         """
-        results = {}
+        # Validate input names
         for name in names:
-            results[name] = self.cached_values[name]
+            if name not in self._supported_variables:
+                raise ValueError(f"Variable '{name}' is not supported by the model.")
 
-        return results
+        return self._get(names)
 
     @abstractmethod
+    def _get(self, names: list[str]) -> dict[str, Any]:
+        """
+        Internal method to get measurements/state from the simulator.
+        Should be implemented by subclasses.
+
+        Args:
+            names: List of variable names to get from the simulator.
+        Returns:
+            Dictionary of variable names and their corresponding values.
+        """
+        pass
+
     def set(self, values: dict[str, Any]) -> None:
         """
         Set control parameters of the simulator. Should do the following:
@@ -63,6 +78,31 @@ class LUMEModel(ABC):
         - set the control parameters of the simulator
         - run the simulator
         - update cached measurements/state
+
+        Args:
+            values: Dictionary of variable names and their corresponding values to set in the simulator.
+
+        Returns:
+            None
+        """
+        # Validate input values
+        for name in values.keys():
+            if name not in self._supported_variables:
+                raise ValueError(f"Variable '{name}' is not supported by the model.")
+            else:
+                variable = self._supported_variables[name]
+                if not variable.is_settable:
+                    raise ValueError(f"Variable '{name}' is not settable.")
+                variable.validate_value(values[name])
+
+        # Set the control parameters of the simulator
+        self._set(values)
+
+    @abstractmethod
+    def _set(self, values: dict[str, Any]) -> None:
+        """
+        Internal method to set control parameters of the simulator.
+        Should be implemented by subclasses.
 
         Args:
             values: Dictionary of variable names and their corresponding values to set in the simulator.
