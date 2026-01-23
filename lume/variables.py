@@ -39,7 +39,7 @@ class Variable(BaseModel, ABC):
         return None
 
     @abstractmethod
-    def validate_value(self, value: Any, config: dict[str, bool] = None):
+    def validate_value(self, value: Any, config: ConfigEnum = None):
         pass
 
     def model_dump(self, **kwargs) -> dict[str, Any]:
