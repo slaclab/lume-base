@@ -25,12 +25,16 @@ class ConfigEnum(str, Enum):
 class Variable(BaseModel, ABC):
     """Abstract variable base class.
 
-    Attributes:
-        name: Name of the variable.
+    Attributes
+    -----------
+    name: str
+        Name of the variable.
+    read_only: bool
+        Flag indicating whether the variable can be set.
     """
 
     name: str
-    is_settable: Optional[bool] = False
+    read_only: bool = False
 
     @property
     @abstractmethod
@@ -50,25 +54,28 @@ class Variable(BaseModel, ABC):
 class ScalarVariable(Variable):
     """Variable for float values.
 
-    Attributes:
-        default_value: Default value for the variable. Note that the LUMEBaseModel requires this
-          for input variables, but it is optional for output variables.
-        value_range: Value range that is considered valid for the variable. If the value range is set to None,
-          the variable is interpreted as a constant and values are validated against the default value.
-        is_constant: Flag indicating whether the variable is constant.
-        is_settable: Flag indicating whether the variable can be set as a control parameter.
-        value_range_tolerance: Tolerance for floating point errors when validating values against the value range.
-        unit: Unit associated with the variable.
+    Attributes
+    ----------
+    default_value: float
+        Default value for the variable.
+    is_constant: bool
+        Flag indicating whether the variable is constant.
+    read_only: bool
+        Flag indicating whether the variable can be set.
+    value_range: tuple[float, float], optional
+        Value range that is considered valid for the variable. If the value range is set to None,
+        the variable is interpreted as a constant and values are validated against the default value.
+    value_range_tolerance: float
+        Tolerance for floating point errors when validating values against the value range.
+    unit: str
+        Unit associated with the variable.
     """
 
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-
-    default_value: Optional[float] = None
-    is_constant: Optional[bool] = False
-    value_range: Optional[tuple[float, float]] = None
-    # tolerance for floating point errors, currently only used for constant variables
-    value_range_tolerance: Optional[float] = 1e-8
-    unit: Optional[str] = None
+    default_value: float = None
+    is_constant: bool = False
+    value_range: tuple[float, float] = None
+    value_range_tolerance: float = 1e-8
+    unit: str = None
 
     @field_validator("value_range", mode="before")
     @classmethod

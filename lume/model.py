@@ -11,30 +11,31 @@ class LUMEModel(ABC):
     types can also inherit from this class and utilize composition to manage multiple
     simulators.
 
-    Attributes:
-        supported_variables: A dictionary of Variable instances that the model supports.
+    Attributes
+    ----------
+    supported_variables: dict[str, Variable]
+        A dictionary of Variable instances that the model supports.
 
-    Methods:
-        get(names: list[str]) -> dict[str, Any]:
-            Get measurements/state from the simulator.
+    Methods
+    -------
+    get(names: list[str]) -> dict[str, Any]:
+        Get measurements/state from the simulator.
 
-        set(values: dict[str, Any]) -> None:
-            Set control parameters of the simulator.
+    set(values: dict[str, Any]) -> None:
+        Set control parameters of the simulator.
 
-        reset() -> None:
-            Reset the simulator to its initial state.
-
-        supported_variables() -> dict[str, Variable]:
-            Return a dict of variables supported by the model. Keys of this dict
-            should be valid keys for get() and set() methods.
+    reset() -> None:
+        Reset the simulator to its initial state.
     """
 
     def __init__(self, supported_variables: dict[str, Variable]) -> None:
         """
         Initialize the LUMEModel with supported variables.
 
-        Args:
-            supported_variables: A dictionary of Variable instances that the model supports.
+        Parameters
+        ----------
+        supported_variables: dict[str, Variable]
+            A dictionary of Variable instances that the model supports.
         """
         self._supported_variables = supported_variables
 
@@ -44,10 +45,14 @@ class LUMEModel(ABC):
         - validate input names against supported_variables
         - return cached measurements/state for the requested names
 
-        Args:
-            names: List of variable names to get from the simulator.
+        Parameters
+        ----------
+        names: list[str]
+            List of variable names to get from the simulator.
 
-        Returns:
+        Returns
+        -------
+        dict[str, Any]
             Dictionary of variable names and their corresponding values.
 
         """
@@ -64,9 +69,14 @@ class LUMEModel(ABC):
         Internal method to get measurements/state from the simulator.
         Should be implemented by subclasses.
 
-        Args:
-            names: List of variable names to get from the simulator.
-        Returns:
+        Parameters
+        ----------
+        names: list[str]
+            List of variable names to get from the simulator.
+
+        Returns
+        -------
+        dict[str, Any]
             Dictionary of variable names and their corresponding values.
         """
         pass
@@ -79,11 +89,14 @@ class LUMEModel(ABC):
         - run the simulator
         - update cached measurements/state
 
-        Args:
-            values: Dictionary of variable names and their corresponding values to set in the simulator.
+        Parameters
+        ----------
+        values: dict[str, Any]
+            Dictionary of variable names and their corresponding values to set in the simulator.
 
-        Returns:
-            None
+        Returns
+        -------
+        None
         """
         # Validate input values
         for name in values.keys():
@@ -91,8 +104,8 @@ class LUMEModel(ABC):
                 raise ValueError(f"Variable '{name}' is not supported by the model.")
             else:
                 variable = self._supported_variables[name]
-                if not variable.is_settable:
-                    raise ValueError(f"Variable '{name}' is not settable.")
+                if variable.read_only:
+                    raise ValueError(f"Variable '{name}' is read-only. Cannot be set.")
                 variable.validate_value(values[name])
 
         # Set the control parameters of the simulator
@@ -101,14 +114,17 @@ class LUMEModel(ABC):
     @abstractmethod
     def _set(self, values: dict[str, Any]) -> None:
         """
-        Internal method to set control parameters of the simulator.
+        Internal method to set control parameters of the simulator and run the simulation.
         Should be implemented by subclasses.
 
-        Args:
-            values: Dictionary of variable names and their corresponding values to set in the simulator.
+        Parameters
+        ----------
+        values: dict[str, Any]
+            Dictionary of variable names and their corresponding values to set in the simulator.
 
-        Returns:
-            None
+        Returns
+        -------
+        None
         """
         pass
 
@@ -124,5 +140,10 @@ class LUMEModel(ABC):
         """
         Return a dict of variables supported by the model. It is expected that
         keys of this dict are valid keys for get() and set() methods.
+
+        Returns
+        -------
+        dict[str, Variable]
+            A dictionary of Variable instances that the model supports.
         """
-        return self._supported_variables
+        return dict(self._supported_variables)
