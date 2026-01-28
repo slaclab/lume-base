@@ -28,17 +28,6 @@ class LUMEModel(ABC):
         Reset the simulator to its initial state.
     """
 
-    def __init__(self, supported_variables: dict[str, Variable]) -> None:
-        """
-        Initialize the LUMEModel with supported variables.
-
-        Parameters
-        ----------
-        supported_variables: dict[str, Variable]
-            A dictionary of Variable instances that the model supports.
-        """
-        self._supported_variables = supported_variables
-
     def get(self, names: list[str]) -> dict[str, Any]:
         """
         Get measurements/state from the simulator. Should do the following:
@@ -58,7 +47,7 @@ class LUMEModel(ABC):
         """
         # Validate input names
         for name in names:
-            if name not in self._supported_variables:
+            if name not in self.supported_variables:
                 raise ValueError(f"Variable '{name}' is not supported by the model.")
 
         return self._get(names)
@@ -79,7 +68,9 @@ class LUMEModel(ABC):
         dict[str, Any]
             Dictionary of variable names and their corresponding values.
         """
-        pass
+        raise NotImplementedError(
+            "private _get method must be implemented by subclasses."
+        )
 
     def set(self, values: dict[str, Any]) -> None:
         """
@@ -100,10 +91,15 @@ class LUMEModel(ABC):
         """
         # Validate input values
         for name in values.keys():
-            if name not in self._supported_variables:
+            if name not in self.supported_variables:
                 raise ValueError(f"Variable '{name}' is not supported by the model.")
             else:
-                variable = self._supported_variables[name]
+                variable = self.supported_variables[name]
+                if not isinstance(variable, Variable):
+                    raise ValueError(
+                        f"Variable '{name}' is not a valid Variable instance."
+                    )
+
                 if variable.read_only:
                     raise ValueError(f"Variable '{name}' is read-only. Cannot be set.")
                 variable.validate_value(values[name])
@@ -126,16 +122,19 @@ class LUMEModel(ABC):
         -------
         None
         """
-        pass
+        raise NotImplementedError(
+            "private _set method must be implemented by subclasses."
+        )
 
     @abstractmethod
     def reset(self) -> None:
         """
         Reset the simulator to its initial state.
         """
-        pass
+        raise NotImplementedError("reset method must be implemented by subclasses.")
 
     @property
+    @abstractmethod
     def supported_variables(self) -> dict[str, Variable]:
         """
         Return a dict of variables supported by the model. It is expected that
@@ -146,4 +145,6 @@ class LUMEModel(ABC):
         dict[str, Variable]
             A dictionary of Variable instances that the model supports.
         """
-        return dict(self._supported_variables)
+        raise NotImplementedError(
+            "supported_variables property must be implemented by subclasses."
+        )
