@@ -58,15 +58,12 @@ class ScalarVariable(Variable):
     ----------
     default_value: float | None
         Default value for the variable.
-        Flag indicating whether the variable is constant.
     read_only: bool
         Flag indicating whether the variable can be set.
     value_range: tuple[float, float] | None
         Value range that is considered valid for the variable. If the value range is set to None,
         the variable is interpreted as a constant and values are validated against the default value.
-    value_range_tolerance: float
-        Tolerance for floating point errors when validating values against the value range.
-    unit: str
+    unit: str | None
         Unit associated with the variable.
     """
 
