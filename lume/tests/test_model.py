@@ -1,3 +1,6 @@
+import sys
+from io import StringIO
+
 import pytest
 from typing import Any
 from lume.model import LUMEModel
@@ -145,9 +148,6 @@ class TestLUMEModel:
         """Test setting variable with out-of-range value triggers validation."""
         # This should trigger range validation warning for ScalarVariable
         # The test captures stdout to verify warning is printed
-        import sys
-        from io import StringIO
-
         captured_output = StringIO()
         sys.stdout = captured_output
 
