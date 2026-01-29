@@ -8,7 +8,7 @@ but they can be used to validate encountered values.
 from abc import ABC, abstractmethod
 from typing import Any
 from enum import Enum
-import math
+import warnings
 
 import numpy as np
 from pydantic import BaseModel, field_validator, model_validator
@@ -101,15 +101,21 @@ class ScalarVariable(Variable):
         """
         Validates the given value.
 
-        Args:
-            value (float): The value to be validated.
-            config (ConfigEnum, optional): The configuration for validation. Defaults to None.
-              Allowed values are "none", "warn", and "error".
+        Attributes
+        ----------
+        value: float
+            The value to be validated.
+        config: ConfigEnum, optional
+            The configuration for validation. Defaults to None.
+            Allowed values are "none", "warn", and "error".
 
-        Raises:
-            TypeError: If the value is not of type float.
-            ValueError: If the value is out of the valid range or does not match the default value
-              for constant variables.
+        Raises
+        ------
+        TypeError: 
+            If the value is not of type float.
+        ValueError: 
+            If the value is out of the valid range or does not match the default value
+            for constant variables.
         """
         _config = self.default_validation_config if config is None else config
         # mandatory validation
@@ -120,7 +126,7 @@ class ScalarVariable(Variable):
 
     @staticmethod
     def _validate_value_type(value: float):
-        if not isinstance(value, float):
+        if not isinstance(value, (int, float, np.floating)):
             raise TypeError(
                 f"Expected value to be of type {float} or {np.float64}, "
                 f"but received {type(value)}."
@@ -139,12 +145,12 @@ class ScalarVariable(Variable):
                 " unpredictable and invalid predictions."
             )
             if config == "warn":
-                print("Warning: " + range_warning_message)
+                warnings.warn(range_warning_message)
             else:
                 raise ValueError(error_message)
 
     def _value_is_within_range(self, value) -> bool:
-        self.value_range = self.value_range or (-np.inf, np.inf)
+        value_range = self.value_range or (-np.inf, np.inf)
 
-        is_within_range = self.value_range[0] <= value <= self.value_range[1]
+        is_within_range = value_range[0] <= value <= value_range[1]
         return is_within_range
