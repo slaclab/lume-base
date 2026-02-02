@@ -111,9 +111,9 @@ class ScalarVariable(Variable):
 
         Raises
         ------
-        TypeError: 
+        TypeError:
             If the value is not of type float.
-        ValueError: 
+        ValueError:
             If the value is out of the valid range or does not match the default value
             for constant variables.
         """
@@ -126,7 +126,7 @@ class ScalarVariable(Variable):
 
     @staticmethod
     def _validate_value_type(value: float):
-        if not isinstance(value, (int, float, np.floating)):
+        if not isinstance(value, (int, float, np.floating)) or isinstance(value, bool):
             raise TypeError(
                 f"Expected value to be of type {float} or {np.float64}, "
                 f"but received {type(value)}."
