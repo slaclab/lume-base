@@ -95,7 +95,7 @@ class ScalarVariable(Variable):
 
     @property
     def default_validation_config(self) -> ConfigEnum:
-        return "warn"
+        return "none"
 
     def validate_value(self, value: float, config: ConfigEnum = None):
         """
