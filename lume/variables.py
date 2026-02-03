@@ -35,12 +35,7 @@ class Variable(BaseModel, ABC):
 
     name: str
     read_only: bool = False
-
-    @property
-    @abstractmethod
-    def default_validation_config(self) -> ConfigEnum:
-        """Determines default behavior during validation."""
-        return None
+    default_validation_config: ConfigEnum = "none"
 
     @abstractmethod
     def validate_value(self, value: Any, config: ConfigEnum = None):
@@ -93,10 +88,6 @@ class ScalarVariable(Variable):
                 )
         return self
 
-    @property
-    def default_validation_config(self) -> ConfigEnum:
-        return "none"
-
     def validate_value(self, value: float, config: ConfigEnum = None):
         """
         Validates the given value.
@@ -117,12 +108,13 @@ class ScalarVariable(Variable):
             If the value is out of the valid range or does not match the default value
             for constant variables.
         """
-        _config = self.default_validation_config if config is None else config
         # mandatory validation
         self._validate_value_type(value)
         # optional validation
-        if config != "none":
-            self._validate_value_is_within_range(value, config=_config)
+        if self.default_validation_config != "none":
+            self._validate_value_is_within_range(
+                value, config=self.default_validation_config
+            )
 
     @staticmethod
     def _validate_value_type(value: float):

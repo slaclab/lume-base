@@ -29,6 +29,7 @@ class MockLUMEModel(LUMEModel):
                 default_value=1.0,
                 value_range=(0.0, 10.0),
                 read_only=False,
+                default_validation_config="warn",
             ),
             "output_var": ScalarVariable(
                 name="output_var",
