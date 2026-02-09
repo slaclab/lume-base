@@ -28,6 +28,16 @@ uv sync --extra dev
 uv run pytest
 ```
 
+or alternatively run pip commands directly in uv:
+
+```bash
+# Install package in editable mode with dev dependencies
+uv pip install -e ".[dev]"
+
+# Run tests
+pytest
+```
+
 ### Building Documentation
 
 ```bash
