@@ -28,7 +28,7 @@ jobs:
           uv sync --extra docs
       - name: Build docs
         run: |
-          mkdocs build
+          uv run mkdocs build
       - name: Upload docs artifact
         uses: actions/upload-pages-artifact@v3
         with:
