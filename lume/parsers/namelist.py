@@ -81,7 +81,6 @@ def parse_simple_namelist(filePath, commentchar="!", condense=False):
 
     lines = []
     with open(filePath) as f:
-
         for line in f:
             ulines = unroll_namelist_line(line, commentchar=commentchar, condense=condense)
             lines = lines + ulines
