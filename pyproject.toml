@@ -39,7 +39,6 @@ Documentation = "https://slaclab.github.io/lume-base"
 dev = [
     "pytest",
     "ipykernel",
-    "ruff",
 ]
 docs = [
     "pygments",
