@@ -39,6 +39,7 @@ Documentation = "https://slaclab.github.io/lume-base"
 dev = [
     "pytest",
     "ipykernel",
+    "ruff"
 ]
 docs = [
     "pygments",
@@ -68,3 +69,23 @@ __version_tuple__ = version_tuple = {version_tuple}
 [tool.pytest.ini_options]
 testpaths = ["lume/tests"]
 addopts = "-v"
+
+[tool.ruff]
+line-length = 115
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["lume"]
+
+[tool.ruff.format]
+docstring-code-format = true
+

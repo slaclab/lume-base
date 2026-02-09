@@ -1,5 +1,6 @@
-from abc import abstractmethod, ABC
+from abc import ABC, abstractmethod
 from typing import Any
+
 from lume.variables import Variable
 
 
@@ -68,9 +69,7 @@ class LUMEModel(ABC):
         dict[str, Any]
             Dictionary of variable names and their corresponding values.
         """
-        raise NotImplementedError(
-            "private _get method must be implemented by subclasses."
-        )
+        raise NotImplementedError("private _get method must be implemented by subclasses.")
 
     def set(self, values: dict[str, Any]) -> None:
         """
@@ -96,9 +95,7 @@ class LUMEModel(ABC):
             else:
                 variable = self.supported_variables[name]
                 if not isinstance(variable, Variable):
-                    raise ValueError(
-                        f"Variable '{name}' is not a valid Variable instance."
-                    )
+                    raise ValueError(f"Variable '{name}' is not a valid Variable instance.")
 
                 if variable.read_only:
                     raise ValueError(f"Variable '{name}' is read-only. Cannot be set.")
@@ -122,9 +119,7 @@ class LUMEModel(ABC):
         -------
         None
         """
-        raise NotImplementedError(
-            "private _set method must be implemented by subclasses."
-        )
+        raise NotImplementedError("private _set method must be implemented by subclasses.")
 
     @abstractmethod
     def reset(self) -> None:
@@ -145,6 +140,4 @@ class LUMEModel(ABC):
         dict[str, Variable]
             A dictionary of Variable instances that the model supports.
         """
-        raise NotImplementedError(
-            "supported_variables property must be implemented by subclasses."
-        )
+        raise NotImplementedError("supported_variables property must be implemented by subclasses.")

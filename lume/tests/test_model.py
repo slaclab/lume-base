@@ -1,7 +1,9 @@
-import pytest
 from typing import Any
+
+import pytest
+
 from lume.model import LUMEModel
-from lume.variables import Variable, ScalarVariable
+from lume.variables import ScalarVariable, Variable
 
 
 # Mock Variable subclass for testing
@@ -215,9 +217,7 @@ class TestLUMEModel:
             @property
             def supported_variables(self):
                 return {
-                    "valid_var": ScalarVariable(
-                        name="valid_var", default_value=1.0, read_only=False
-                    ),
+                    "valid_var": ScalarVariable(name="valid_var", default_value=1.0, read_only=False),
                     "invalid_var": "not_a_variable_object",  # This is not a Variable!
                 }
 

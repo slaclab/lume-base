@@ -26,6 +26,8 @@ jobs:
       - name: Install dependencies and package
         run: |
           uv sync --extra dev
+      - name: List Python package versions
+        run: uv pip list
       - name: Run tests
         run: |
           uv run pytest

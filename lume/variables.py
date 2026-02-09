@@ -5,16 +5,16 @@ but they can be used to validate encountered values.
 
 """
 
-from abc import ABC, abstractmethod
-from typing import Any
-from enum import Enum
 import warnings
+from abc import ABC, abstractmethod
+from enum import StrEnum
+from typing import Any
 
 import numpy as np
 from pydantic import BaseModel, field_validator, model_validator
 
 
-class ConfigEnum(str, Enum):
+class ConfigEnum(StrEnum):
     """Enum for configuration options during validation."""
 
     NULL = "none"
@@ -72,9 +72,7 @@ class ScalarVariable(Variable):
         if value is not None:
             value = tuple(value)
             if not value[0] <= value[1]:
-                raise ValueError(
-                    f"Minimum value ({value[0]}) must be lower or equal than maximum ({value[1]})."
-                )
+                raise ValueError(f"Minimum value ({value[0]}) must be lower or equal than maximum ({value[1]}).")
         return value
 
     @model_validator(mode="after")
@@ -112,28 +110,20 @@ class ScalarVariable(Variable):
         self._validate_value_type(value)
         # optional validation
         if self.default_validation_config != "none":
-            self._validate_value_is_within_range(
-                value, config=self.default_validation_config
-            )
+            self._validate_value_is_within_range(value, config=self.default_validation_config)
 
     @staticmethod
     def _validate_value_type(value: float):
         if not isinstance(value, (int, float, np.floating)) or isinstance(value, bool):
-            raise TypeError(
-                f"Expected value to be of type {float} or {np.float64}, "
-                f"but received {type(value)}."
-            )
+            raise TypeError(f"Expected value to be of type {float} or {np.float64}, but received {type(value)}.")
 
     def _validate_value_is_within_range(self, value: float, config: ConfigEnum = None):
         if not self._value_is_within_range(value):
-            error_message = (
-                "Value ({}) of '{}' is out of valid range: ([{},{}]).".format(
-                    value, self.name, *self.value_range
-                )
+            error_message = "Value ({}) of '{}' is out of valid range: ([{},{}]).".format(
+                value, self.name, *self.value_range
             )
             range_warning_message = (
-                error_message
-                + " Executing the model outside of the range may result in"
+                error_message + " Executing the model outside of the range may result in"
                 " unpredictable and invalid predictions."
             )
             if config == "warn":
