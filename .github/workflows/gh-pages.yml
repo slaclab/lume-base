@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - 'main'
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - 'main'
 
 permissions:
   id-token: write
@@ -30,12 +35,13 @@ jobs:
         run: |
           uv run mkdocs build
       - name: Upload docs artifact
+        if: github.repository == 'slaclab/lume-base' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./site
 
   deploy:
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags')
+    if: github.repository == 'slaclab/lume-base' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
