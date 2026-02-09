@@ -3,28 +3,44 @@ name: Run tests
 on: [push, pull_request]
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Install dependencies
+        run: |
+          uv pip install --system ruff
+      - name: Run linting
+        run: |
+          ruff check .
+
   test:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python-version: [3.11, 3.12, 3.13]
+        python-version: ["3.11", "3.12", "3.13"]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-      - uses: conda-incubator/setup-miniconda@v2
+          fetch-depth: 1
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
         with:
-          auto-activate-base: true
-          activate-environment: true
+          enable-cache: true
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
           python-version: ${{ matrix.python-version }}
-          channels: conda-forge
-          channel-priority: strict
-      - name: Install Dependencies
-        shell: bash -l {0}
+      - name: Install dependencies and package
         run: |
-          conda config --set always_yes yes --set changeps1 no
-          conda install --file requirements.txt
-          conda install --file dev-requirements.txt
-          pip install .
+          uv pip install --system -e ".[dev]"
+      - name: Run tests
+        run: |
           pytest .

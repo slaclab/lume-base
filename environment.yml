@@ -1,14 +1,12 @@
 # conda env create -f environment.yml
+# This is a legacy file. We recommend using uv for development:
+#   pip install uv
+#   uv pip install -e ".[dev]"
 name: lume-dev
 channels:
   - conda-forge
 dependencies:
-  - python=3.9
-  - numpy
-  - openpmd-beamphysics
-  - h5py
-  - pyyaml
-  - pydantic
-# Developer
-  - pytest
-  - ipykernel
+  - python>=3.9
+  - pip
+  - pip:
+    - -e .[dev]

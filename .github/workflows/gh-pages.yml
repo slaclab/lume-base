@@ -5,39 +5,43 @@ on:
     branches:
       - 'main'
 
+permissions:
+  id-token: write
+  contents: write
+  pages: write
+  actions: read
+
 jobs:
-  deploy:
-    if: ${{ github.repository == 'slaclab/lume-base' }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        python-version: [3.7]
+  build:
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: conda-incubator/setup-miniconda@v2
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
         with:
-          auto-activate-base: true
-          activate-environment: true
-          python-version: ${{ matrix.python-version }}
-          channels: conda-forge
-          channel-priority: strict
-      - name: Install Dependencies
-        shell: bash -l {0}
+          enable-cache: true
+      - name: Install dependencies
         run: |
-          conda config --set always_yes yes --set changeps1 no
-          conda install numpy openpmd-beamphysics
-          conda install --file requirements.txt
-          conda install --file docs-requirements.txt
-      - name: Build Docs
-        shell: bash -l {0}
+          uv sync --extra docs
+      - name: Build docs
         run: |
           mkdocs build
-      - name: Deploy to gh-pages
-        uses: peaceiris/actions-gh-pages@v3
-        if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags')
+      - name: Upload docs artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./site/
+          path: ./site
+
+  deploy:
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags')
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    needs: build
+    runs-on: ubuntu-latest
+    name: Deploy
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

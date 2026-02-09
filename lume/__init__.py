@@ -1,3 +1,7 @@
+from importlib.metadata import version, PackageNotFoundError
 
-from . import _version
-__version__ = _version.get_versions()['version']
+try:
+    __version__ = version("lume-base")
+except PackageNotFoundError:
+    # Package is not installed
+    __version__ = "0.0.0+unknown"
