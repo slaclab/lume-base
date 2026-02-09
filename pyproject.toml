@@ -68,33 +68,4 @@ __version_tuple__ = version_tuple = {version_tuple}
 
 [tool.pytest.ini_options]
 testpaths = ["lume/tests"]
-python_files = ["test_*.py"]
-python_classes = ["Test*"]
-python_functions = ["test_*"]
 addopts = "-v"
-
-[tool.ruff]
-line-length = 115
-target-version = "py39"
-extend-exclude = ["lume/_version.py"]
-
-[tool.ruff.lint]
-select = [
-    "E",  # pycodestyle errors
-    "W",  # pycodestyle warnings
-    "F",  # pyflakes
-    "I",  # isort
-    "UP", # pyupgrade
-]
-ignore = [
-    "E501", # line too long (handled by formatter)
-]
-
-[tool.ruff.lint.isort]
-known-first-party = ["lume"]
-
-[tool.uv.workspace]
-members = [
-    "lume-base",
-]
-
