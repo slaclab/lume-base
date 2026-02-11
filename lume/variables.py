@@ -6,12 +6,11 @@ but they can be used to validate encountered values.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Optional, Tuple, Union
+from typing import Any
 from enum import Enum
 import warnings
 
 import numpy as np
-from numpy.typing import NDArray
 from pydantic import BaseModel, field_validator, model_validator, ConfigDict
 
 
@@ -48,8 +47,8 @@ class Variable(BaseModel, ABC):
     def model_dump(self, **kwargs) -> dict[str, Any]:
         config = super().model_dump(**kwargs)
         # Convert enum to its string value for serialization
-        if 'default_validation_config' in config:
-            config['default_validation_config'] = self.default_validation_config.value
+        if "default_validation_config" in config:
+            config["default_validation_config"] = self.default_validation_config.value
         return {"variable_class": self.__class__.__name__} | config
 
 
@@ -125,9 +124,7 @@ class ScalarVariable(Variable):
 
         config = self.default_validation_config if config is None else config
         if config != ConfigEnum.NULL:
-            self._validate_value_is_within_range(
-                value, config=config
-            )
+            self._validate_value_is_within_range(value, config=config)
 
     @staticmethod
     def _validate_value_type(value: float):
