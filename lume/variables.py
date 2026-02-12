@@ -34,11 +34,12 @@ class Variable(BaseModel, ABC):
 
     """
 
+    # store/serialize as string
     model_config = ConfigDict(use_enum_values=True)
 
     name: str
     read_only: bool = False
-    default_validation_config: ConfigEnum = ConfigEnum.NULL
+    default_validation_config: ConfigEnum = "none"
 
     @abstractmethod
     def validate_value(self, value: Any, config: ConfigEnum = None):
@@ -116,13 +117,14 @@ class ScalarVariable(Variable):
         # mandatory validation
         self._validate_value_type(value)
 
-        # optional validation
+        # optional validation - determine which config to use
+        if config is None:
+            config = self.default_validation_config
+
+        # Convert to enum for type-safe comparison
         if isinstance(config, str):
             config = ConfigEnum(config)
 
-        # Use getattr with fallback for backward compatibility
-        default_config = getattr(self, 'default_validation_config', ConfigEnum.NULL)
-        config = default_config if config is None else config
         if config != ConfigEnum.NULL:
             self._validate_value_is_within_range(value, config=config)
 
