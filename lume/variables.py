@@ -46,9 +46,7 @@ class Variable(BaseModel, ABC):
 
     def model_dump(self, **kwargs) -> dict[str, Any]:
         config = super().model_dump(**kwargs)
-        # Convert enum to its string value for serialization
-        if "default_validation_config" in config:
-            config["default_validation_config"] = self.default_validation_config.value
+        # use_enum_values=True already handles enum conversion
         return {"variable_class": self.__class__.__name__} | config
 
 
