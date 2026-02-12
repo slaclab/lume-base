@@ -122,7 +122,9 @@ class ScalarVariable(Variable):
         if isinstance(config, str):
             config = ConfigEnum(config)
 
-        config = self.default_validation_config if config is None else config
+        # Use getattr with fallback for backward compatibility
+        default_config = getattr(self, 'default_validation_config', ConfigEnum.NULL)
+        config = default_config if config is None else config
         if config != ConfigEnum.NULL:
             self._validate_value_is_within_range(value, config=config)
 
