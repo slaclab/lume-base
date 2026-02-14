@@ -40,33 +40,33 @@ pytest
 
 ### Linting and Formatting
 
-This project uses [ruff](https://github.com/astral-sh/ruff) for linting and code formatting. Before committing your changes, please ensure your code passes all linting checks:
+This project uses [pre-commit](https://pre-commit.com/) to manage code quality checks, including [ruff](https://github.com/astral-sh/ruff) for linting and formatting. Pre-commit hooks will automatically run on every commit.
 
 ```bash
-# Install ruff (if not already installed from dev dependencies)
-uv pip install ruff
+# Install pre-commit (if not already installed from dev dependencies)
+uv pip install pre-commit
 
-# Check for linting issues
-ruff check .
+# Install the git hook scripts
+pre-commit install
 
-# Automatically fix linting issues where possible
-ruff check . --fix
-
-# Check code formatting
-ruff format --check .
-
-# Format code
-ruff format .
+# (Optional) Run against all files manually
+pre-commit run --all-files
 ```
 
-**Before pushing your changes**, run:
+Once installed, pre-commit will automatically run checks whenever you commit changes. If any checks fail, the commit will be blocked until you fix the issues.
+
+**To manually run checks before committing:**
 
 ```bash
-# Fix linting issues and format code
-ruff check . --fix && ruff format .
+# Run all pre-commit hooks
+pre-commit run --all-files
+
+# Or run only ruff checks
+pre-commit run ruff --all-files
+pre-commit run ruff-format --all-files
 ```
 
-The CI pipeline will automatically run these checks on every push and pull request. Your code must pass both `ruff check` and `ruff format --check` to merge.
+The CI pipeline will automatically run these checks on every push and pull request.
 
 ### Building Documentation
 
@@ -80,4 +80,3 @@ uv run mkdocs build
 # Serve docs locally
 uv run mkdocs serve
 ```
-
