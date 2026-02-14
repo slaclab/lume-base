@@ -31,6 +31,10 @@ class Variable(BaseModel, ABC):
         Name of the variable.
     read_only : bool
         Flag indicating whether the variable can be set.
+    default_validation_config : ConfigEnum
+        Default validation configuration to use when validating values.
+        Valid options are "none" (no validation), "warn" (warn on invalid values),
+        or "error" (raise error on invalid values). Defaults to "none".
 
     """
 
@@ -41,13 +45,31 @@ class Variable(BaseModel, ABC):
     read_only: bool = False
     default_validation_config: ConfigEnum = "none"
 
+    def _validation_config_as_enum(self, config: ConfigEnum = None) -> ConfigEnum:
+        """Convert validation config to enum type.
+
+        Parameters
+        ----------
+        config : ConfigEnum, optional
+            The configuration for validation. If None, uses default_validation_config.
+
+        Returns
+        -------
+        ConfigEnum
+            The config as a ConfigEnum instance.
+        """
+        if config is None:
+            config = self.default_validation_config
+        if isinstance(config, str):
+            config = ConfigEnum(config)
+        return config
+
     @abstractmethod
     def validate_value(self, value: Any, config: ConfigEnum = None):
         pass
 
     def model_dump(self, **kwargs) -> dict[str, Any]:
         config = super().model_dump(**kwargs)
-        # use_enum_values=True already handles enum conversion
         return {"variable_class": self.__class__.__name__} | config
 
 
@@ -84,14 +106,7 @@ class ScalarVariable(Variable):
     @model_validator(mode="after")
     def validate_default_value(self):
         if self.default_value is not None:
-            self._validate_value_type(self.default_value)
-            if self.value_range is not None:
-                if not self._value_is_within_range(self.default_value):
-                    raise ValueError(
-                        "Default value ({}) is out of valid range: ([{},{}]).".format(
-                            self.default_value, *self.value_range
-                        )
-                    )
+            self.validate_value(self.default_value, ConfigEnum.ERROR)
         return self
 
     def validate_value(self, value: float, config: ConfigEnum = None):
@@ -117,13 +132,8 @@ class ScalarVariable(Variable):
         # mandatory validation
         self._validate_value_type(value)
 
-        # optional validation - determine which config to use
-        if config is None:
-            config = self.default_validation_config
-
-        # Convert to enum for type-safe comparison
-        if isinstance(config, str):
-            config = ConfigEnum(config)
+        # optional validation
+        config = self._validation_config_as_enum(config)
 
         if config != ConfigEnum.NULL:
             self._validate_value_is_within_range(value, config=config)
@@ -137,8 +147,7 @@ class ScalarVariable(Variable):
             )
 
     def _validate_value_is_within_range(self, value: float, config: ConfigEnum = None):
-        if isinstance(config, str):
-            config = ConfigEnum(config)
+        config = self._validation_config_as_enum(config)
 
         if not self._value_is_within_range(value):
             error_message = (
