@@ -32,7 +32,9 @@ class MyModel(Base):
                     input_image_path = os.path.join(root, config["input_image"])
 
                     if not os.path.exists(tools.full_path(input_image_path)):
-                        raise Exception("Unable to resolve input impage path %s", input_image_path)
+                        raise Exception(
+                            "Unable to resolve input impage path %s", input_image_path
+                        )
 
                 config["input_image"] = np.load(input_image_path)
 

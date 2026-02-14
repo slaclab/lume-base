@@ -11,7 +11,13 @@ import numpy as np
 
 
 def isotime():
-    return datetime.datetime.utcnow().replace(tzinfo=datetime.UTC).astimezone().replace(microsecond=0).isoformat()
+    return (
+        datetime.datetime.utcnow()
+        .replace(tzinfo=datetime.UTC)
+        .astimezone()
+        .replace(microsecond=0)
+        .isoformat()
+    )
 
 
 class NpEncoder(json.JSONEncoder):
@@ -143,7 +149,9 @@ def execute(cmd, cwd=None):
     Useful in Jupyter notebook
 
     """
-    popen = subprocess.Popen(cmd, stdout=subprocess.PIPE, universal_newlines=True, cwd=cwd)
+    popen = subprocess.Popen(
+        cmd, stdout=subprocess.PIPE, universal_newlines=True, cwd=cwd
+    )
     yield from iter(popen.stdout.readline, "")
     popen.stdout.close()
     return_code = popen.wait()
@@ -160,7 +168,12 @@ def execute2(cmd, timeout=None, cwd=None):
     output = {"error": True, "log": ""}
     try:
         p = subprocess.run(
-            cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=timeout, cwd=cwd
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            timeout=timeout,
+            cwd=cwd,
         )
         #  p = subprocess.run(' '.join(cmd), shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
         #                     universal_newlines=True, timeout = timeout)

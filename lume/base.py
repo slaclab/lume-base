@@ -28,7 +28,15 @@ class Base(ABC):
         The timeout in seconds to be used, by default None
     """
 
-    def __init__(self, input_file=None, *, initial_particles=None, verbose=False, timeout=None, **kwargs):
+    def __init__(
+        self,
+        input_file=None,
+        *,
+        initial_particles=None,
+        verbose=False,
+        timeout=None,
+        **kwargs,
+    ):
 
         self._input_file = input_file
         self._initial_particles = initial_particles
@@ -346,7 +354,10 @@ class CommandWrapper(Base):
         timeout=None,
     ):
         super().__init__(
-            input_file=input_file, initial_particles=initial_particles, verbose=verbose, timeout=timeout
+            input_file=input_file,
+            initial_particles=initial_particles,
+            verbose=verbose,
+            timeout=timeout,
         )
         # Execution
         self._command = command or self.COMMAND
@@ -452,7 +463,9 @@ class CommandWrapper(Base):
         runscript : str
             The script to run the command.
         """
-        _, infile = os.path.split(self.input_file)  # Expect to run locally. Astra has problems with long paths.
+        _, infile = os.path.split(
+            self.input_file
+        )  # Expect to run locally. Astra has problems with long paths.
 
         runscript = [self.command, infile]
 
@@ -582,7 +595,9 @@ class CommandWrapper(Base):
             Support for extra arguments.
         """
         f = tools.full_path(input_filepath)
-        self.original_path, self.original_input_file = os.path.split(f)  # Get original path, filename
+        self.original_path, self.original_input_file = os.path.split(
+            f
+        )  # Get original path, filename
         self.input = self.input_parser(f)
 
     @abstractmethod

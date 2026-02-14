@@ -217,7 +217,9 @@ class TestLUMEModel:
             @property
             def supported_variables(self):
                 return {
-                    "valid_var": ScalarVariable(name="valid_var", default_value=1.0, read_only=False),
+                    "valid_var": ScalarVariable(
+                        name="valid_var", default_value=1.0, read_only=False
+                    ),
                     "invalid_var": "not_a_variable_object",  # This is not a Variable!
                 }
 

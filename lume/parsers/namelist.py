@@ -82,7 +82,9 @@ def parse_simple_namelist(filePath, commentchar="!", condense=False):
     lines = []
     with open(filePath) as f:
         for line in f:
-            ulines = unroll_namelist_line(line, commentchar=commentchar, condense=condense)
+            ulines = unroll_namelist_line(
+                line, commentchar=commentchar, condense=condense
+            )
             lines = lines + ulines
 
     return lines
@@ -167,7 +169,9 @@ def namelist_lines(namelist_dict, name, end="/", strip_strings=False):
             line = key + " = " + str(value)
         else:
             # print 'skipped: key, value = ', key, value
-            raise ValueError(f"Problem writing input key: {key}, value: {value}, type: {type(value)}")
+            raise ValueError(
+                f"Problem writing input key: {key}, value: {value}, type: {type(value)}"
+            )
 
         lines.append(line)
 
