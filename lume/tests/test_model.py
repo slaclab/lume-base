@@ -1,9 +1,10 @@
-import pytest
 from typing import Any
 import json
 import yaml
+import pytest
 from lume.model import LUMEModel
 from lume.variables import Variable, ScalarVariable, ConfigEnum
+
 
 
 # Mock Variable subclass for testing

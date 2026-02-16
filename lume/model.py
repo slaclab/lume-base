@@ -1,5 +1,6 @@
-from abc import abstractmethod, ABC
+from abc import ABC, abstractmethod
 from typing import Any
+
 from lume.variables import Variable
 
 

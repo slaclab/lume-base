@@ -1,5 +1,6 @@
-from lume.serializers.hdf5 import HDF5Serializer
 import numpy as np
+
+from lume.serializers.hdf5 import HDF5Serializer
 
 
 class SerializableObject:

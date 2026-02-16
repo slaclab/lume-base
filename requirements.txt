@@ -1,5 +1,0 @@
-numpy
-openpmd-beamphysics
-h5py
-pyyaml
-pydantic
