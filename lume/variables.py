@@ -5,16 +5,16 @@ but they can be used to validate encountered values.
 
 """
 
-from abc import ABC, abstractmethod
-from typing import Any
-from enum import Enum
 import warnings
+from abc import ABC, abstractmethod
+from enum import StrEnum
+from typing import Any
 
 import numpy as np
 from pydantic import BaseModel, field_validator, model_validator
 
 
-class ConfigEnum(str, Enum):
+class ConfigEnum(StrEnum):
     """Enum for configuration options during validation."""
 
     NULL = "none"
@@ -120,8 +120,7 @@ class ScalarVariable(Variable):
     def _validate_value_type(value: float):
         if not isinstance(value, (int, float, np.floating)) or isinstance(value, bool):
             raise TypeError(
-                f"Expected value to be of type {float} or {np.float64}, "
-                f"but received {type(value)}."
+                f"Expected value to be of type {float} or {np.float64}, but received {type(value)}."
             )
 
     def _validate_value_is_within_range(self, value: float, config: ConfigEnum = None):

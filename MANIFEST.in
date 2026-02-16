@@ -1,4 +1,0 @@
-include versioneer.py
-include lume/_version.py
-include LICENSE
-include requirements.txt
