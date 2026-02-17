@@ -6,7 +6,6 @@ from pydantic import field_validator, model_validator
 from lume.variables.variable import Variable, ConfigEnum
 
 
-
 class ScalarVariable(Variable):
     """Variable for float values.
 
