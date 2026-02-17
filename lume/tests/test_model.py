@@ -1,7 +1,9 @@
-import pytest
 from typing import Any
+
+import pytest
+
 from lume.model import LUMEModel
-from lume.variables import Variable, ScalarVariable
+from lume.variables import ScalarVariable, Variable
 
 
 # Mock Variable subclass for testing

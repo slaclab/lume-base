@@ -1,9 +1,19 @@
+"""
+This module contains definitions of LUME-model variables for use with lume tools.
+Variables are designed as pure descriptors and thus aren't intended to hold actual values,
+but they can be used to validate encountered values.
+
+"""
+
 import warnings
+from abc import ABC, abstractmethod
+from enum import StrEnum
+from typing import Any
+
 import numpy as np
 from pydantic import field_validator, model_validator
 
 from lume.variables.variable import Variable, ConfigEnum
-
 
 class ScalarVariable(Variable):
     """Variable for float values.
@@ -79,8 +89,7 @@ class ScalarVariable(Variable):
     def _validate_value_type(value: float):
         if not isinstance(value, (int, float, np.floating)) or isinstance(value, bool):
             raise TypeError(
-                f"Expected value to be of type {float} or {np.float64}, "
-                f"but received {type(value)}."
+                f"Expected value to be of type {float} or {np.float64}, but received {type(value)}."
             )
 
     def _validate_value_is_within_range(self, value: float, config: ConfigEnum = None):

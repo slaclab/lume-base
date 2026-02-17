@@ -1,15 +1,14 @@
-from .base import SerializerBase, ModuleImportError, ClassInitError
-import h5py
 import importlib
-import numpy as np
 
 # prevent circular import by only importing on type-check
 from typing import TYPE_CHECKING
 
+import h5py
+
+from .base import ClassInitError, ModuleImportError, SerializerBase
+
 if TYPE_CHECKING:
     from lume.base import Base
-
-
 
 
 class HDF5Serializer(SerializerBase):
@@ -64,7 +63,6 @@ class HDF5Serializer(SerializerBase):
         """
 
         with h5py.File(filename, "r", libver=cls._libver) as f:
-
             # Because we've stored things like version, object, and package version, we can do integrity checks
             cls._check_compat(f.attrs.get("_version"))
 
