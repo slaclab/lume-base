@@ -6,11 +6,9 @@ from lume.model import LUMEModel
 from lume.variables import Variable, ScalarVariable, ConfigEnum
 
 
-
 # Mock Variable subclass for testing
 class MockVariable(Variable):
     """Mock Variable implementation for testing purposes."""
-
 
     def validate_value(self, value: Any, config=None):
         """Simple validation - just check if value is not None"""
@@ -494,6 +492,3 @@ class TestConfigEnumValidation:
         # Should raise ValueError for invalid config string
         with pytest.raises(ValueError, match="'invalid' is not a valid ConfigEnum"):
             var.validate_value(7.0, config="invalid")
-
-
-
