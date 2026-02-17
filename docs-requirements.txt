@@ -1,7 +1,0 @@
-pygments
-mkdocs
-mkdocstrings
-mkdocstrings-python
-mkdocs-material
-livereload
-pytkdocs[numpy-style]
