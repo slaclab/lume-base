@@ -1,9 +1,10 @@
-import h5py
-from lume.serializers.hdf5 import HDF5Serializer
-from lume.base import CommandWrapper
+import os
+
 import numpy as np
 import pytest
-import os
+
+from lume.base import CommandWrapper
+from lume.serializers.hdf5 import HDF5Serializer
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -28,10 +29,10 @@ class LUMEObject(CommandWrapper):
     # implement abstract archive method
     def archive(self, h5):
         input_group = h5.create_group("input")
-        input = input_group.create_dataset("data", data=self.input["data"])
+        input_group.create_dataset("data", data=self.input["data"])
 
         output_group = h5.create_group("output")
-        output = output_group.create_dataset("data", data=self.output["data"])
+        output_group.create_dataset("data", data=self.output["data"])
 
     # implement abstract plot method
     def plot(self, y=[], return_figure=False) -> None:

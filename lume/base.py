@@ -1,16 +1,13 @@
-import os
 import copy
+import os
 import tempfile
-import shutil
 import warnings
-import yaml
-from lume.serializers.base import SerializerBase
-from lume.serializers.hdf5 import HDF5Serializer
+from abc import ABC, abstractmethod
 
+import yaml
 from pmd_beamphysics import ParticleGroup
 
-
-from abc import ABC, abstractmethod
+from lume.serializers.hdf5 import HDF5Serializer
 
 from . import tools
 
@@ -32,8 +29,14 @@ class Base(ABC):
     """
 
     def __init__(
-            self, input_file=None, *, initial_particles=None,
-            verbose=False, timeout=None, **kwargs):
+        self,
+        input_file=None,
+        *,
+        initial_particles=None,
+        verbose=False,
+        timeout=None,
+        **kwargs,
+    ):
 
         self._input_file = input_file
         self._initial_particles = initial_particles
@@ -211,54 +214,52 @@ class Base(ABC):
             yaml_file = tools.full_path(yaml_file)
             config = yaml.safe_load(open(yaml_file))
 
-            if 'input_file' in config:
-
+            if "input_file" in config:
                 # Check that the input file is absolute path...
                 # require absolute/ relative to working dir for model input file
-                f = os.path.expandvars(config['input_file'])
+                f = os.path.expandvars(config["input_file"])
                 if not os.path.isabs(f):
                     # Get the yaml file root
                     root, _ = os.path.split(tools.full_path(yaml_file))
-                    config['input_file'] = os.path.join(root, f)
-                    
+                    config["input_file"] = os.path.join(root, f)
+
                 # Here, we update the config with the input_file contents
                 # provided that the input_parser method has been implemented on the subclass
                 if parse_input:
-                    parsed_input = cls.input_parser(config['input_file'])
+                    parsed_input = cls.input_parser(config["input_file"])
                     config.update(parsed_input)
-                    
 
         else:
             # Try raw string
             config = yaml.safe_load(yaml_file)
             if parse_input and "input_file" in config:
-                parsed_input = cls.input_parser(config['input_file'])
+                parsed_input = cls.input_parser(config["input_file"])
                 config.update(parsed_input)
 
         # Form ParticleGroup from file
-        if 'initial_particles' in config:
-            f = config['initial_particles']
+        if "initial_particles" in config:
+            f = config["initial_particles"]
             if not os.path.isabs(f):
                 root, _ = os.path.split(tools.full_path(yaml_file))
                 f = os.path.join(root, f)
-            config['initial_particles'] = ParticleGroup(f)
+            config["initial_particles"] = ParticleGroup(f)
 
         return cls(**config)
-    
+
     def to_hdf5(self, filename: str) -> None:
         """Serialize an object to an hdf5 file.
 
         Parameters
         ----------
         filename: str
-        
+
         """
         serializer = HDF5Serializer()
         serializer.serialize(filename, self)
 
     @classmethod
     def from_hdf5(cls, filename: str) -> "Base":
-        """Load an object from and hdf5. 
+        """Load an object from and hdf5.
 
         Parameters
         ----------
@@ -285,7 +286,7 @@ class Base(ABC):
             Handle to the HDF5 file.
         """
         raise NotImplementedError
-    
+
     @abstractmethod
     def load_archive(self, h5, configure=True):
         """
@@ -339,12 +340,24 @@ class CommandWrapper(Base):
     WORKDIR = None
 
     def __init__(
-            self, input_file=None, *, initial_particles=None,
-            command=None, command_mpi=None, use_mpi=False, mpi_run="",
-            use_temp_dir=True, workdir=None,
-            verbose=False, timeout=None):
+        self,
+        input_file=None,
+        *,
+        initial_particles=None,
+        command=None,
+        command_mpi=None,
+        use_mpi=False,
+        mpi_run="",
+        use_temp_dir=True,
+        workdir=None,
+        verbose=False,
+        timeout=None,
+    ):
         super().__init__(
-            input_file=input_file, initial_particles=initial_particles, verbose=verbose, timeout=timeout
+            input_file=input_file,
+            initial_particles=initial_particles,
+            verbose=verbose,
+            timeout=timeout,
         )
         # Execution
         self._command = command or self.COMMAND
@@ -416,7 +429,7 @@ class CommandWrapper(Base):
         cmd = command
         if command:
             cmd = tools.full_path(command)
-            assert os.path.exists(cmd), 'ERROR: Command does not exist:' + command
+            assert os.path.exists(cmd), "ERROR: Command does not exist:" + command
         self._command = cmd
 
     @property
@@ -431,7 +444,7 @@ class CommandWrapper(Base):
         cmd = command_mpi
         if command_mpi:
             cmd = tools.full_path(command_mpi)
-            assert os.path.exists(cmd), 'ERROR: Command does not exist:' + command_mpi
+            assert os.path.exists(cmd), "ERROR: Command does not exist:" + command_mpi
         self._command_mpi = cmd
 
     def get_run_script(self, write_to_path=True):
@@ -450,13 +463,15 @@ class CommandWrapper(Base):
         runscript : str
             The script to run the command.
         """
-        _, infile = os.path.split(self.input_file)  # Expect to run locally. Astra has problems with long paths.
+        _, infile = os.path.split(
+            self.input_file
+        )  # Expect to run locally. Astra has problems with long paths.
 
         runscript = [self.command, infile]
 
         if write_to_path:
-            with open(os.path.join(self.path, 'run'), 'w') as f:
-                f.write(' '.join(runscript))
+            with open(os.path.join(self.path, "run"), "w") as f:
+                f.write(" ".join(runscript))
 
         return runscript
 
@@ -480,9 +495,21 @@ class CommandWrapper(Base):
         return c
 
     @abstractmethod
-    def plot(self, y=[], x=None, xlim=None, ylim=None, ylim2=None, y2=[], nice=True,
-             include_layout=True, include_labels=False, include_particles=True, include_legend=True,
-             return_figure=False):
+    def plot(
+        self,
+        y=[],
+        x=None,
+        xlim=None,
+        ylim=None,
+        ylim2=None,
+        y2=[],
+        nice=True,
+        include_layout=True,
+        include_labels=False,
+        include_particles=True,
+        include_legend=True,
+        return_figure=False,
+    ):
         """
         Plots output multiple keys.
 
@@ -536,7 +563,6 @@ class CommandWrapper(Base):
         """
         raise NotImplementedError
 
-
     @staticmethod
     @abstractmethod
     def input_parser(path):
@@ -569,7 +595,9 @@ class CommandWrapper(Base):
             Support for extra arguments.
         """
         f = tools.full_path(input_filepath)
-        self.original_path, self.original_input_file = os.path.split(f)  # Get original path, filename
+        self.original_path, self.original_input_file = os.path.split(
+            f
+        )  # Get original path, filename
         self.input = self.input_parser(f)
 
     @abstractmethod
@@ -589,8 +617,7 @@ class CommandWrapper(Base):
             self._base_path = None
             self._configured = False
 
-
-    @property 
+    @property
     def workdir(self):
         """
         Get or set the working directory
@@ -601,7 +628,6 @@ class CommandWrapper(Base):
     def workdir(self, workdir):
         workdir = tools.full_path(workdir)
         self.setup_workdir(workdir)
-
 
     def setup_workdir(self, workdir, cleanup=True):
         """
@@ -616,10 +642,10 @@ class CommandWrapper(Base):
         cleanup : bool
             Whether or not to remove the directory at exit. Defaults to True.
         """
-        
+
         if not cleanup:
-             warnings.warn("cleanup option has been removed", DeprecationWarning)
-        
+            warnings.warn("cleanup option has been removed", DeprecationWarning)
+
         # Set paths
         if self._use_temp_dir:
             # Need to attach this to the object. Otherwise it will go out of scope.

@@ -1,16 +1,14 @@
-import pytest
 from typing import Any
+import json
+import yaml
+import pytest
 from lume.model import LUMEModel
-from lume.variables import Variable, ScalarVariable
+from lume.variables import Variable, ScalarVariable, ConfigEnum
 
 
 # Mock Variable subclass for testing
 class MockVariable(Variable):
     """Mock Variable implementation for testing purposes."""
-
-    @property
-    def default_validation_config(self):
-        return "warn"
 
     def validate_value(self, value: Any, config=None):
         """Simple validation - just check if value is not None"""
@@ -37,7 +35,9 @@ class MockLUMEModel(LUMEModel):
                 value_range=(0.0, 20.0),
                 read_only=True,
             ),
-            "control_var": MockVariable(name="control_var", read_only=False),
+            "control_var": MockVariable(
+                name="control_var", read_only=False, default_validation_config="warn"
+            ),
         }
         self._state = {"input_var": 1.0, "output_var": 2.0, "control_var": "initial"}
         self._initial_state = self._state.copy()
@@ -241,3 +241,254 @@ class TestLUMEModel:
         with pytest.raises(ValueError, match="is not a valid Variable instance"):
             # This should fail because strings don't have read_only or validate_value attributes
             model.set({"invalid_var": "some_value"})
+
+
+class TestVariableModelDump:
+    """Test that model_dump properly serializes ConfigEnum values."""
+
+    def test_scalar_variable_model_dump_serializes_config_enum(self):
+        """Test that ScalarVariable.model_dump() converts ConfigEnum to string."""
+        # Test with each ConfigEnum value
+        for config_value in [ConfigEnum.NULL, ConfigEnum.WARN, ConfigEnum.ERROR]:
+            var = ScalarVariable(
+                name="test_var",
+                default_value=1.0,
+                value_range=(0.0, 10.0),
+                default_validation_config=config_value,
+            )
+
+            dumped = var.model_dump()
+
+            # Check that variable_class is included
+            assert "variable_class" in dumped
+            assert dumped["variable_class"] == "ScalarVariable"
+
+            # Check that default_validation_config is a string, not an enum
+            assert "default_validation_config" in dumped
+            assert isinstance(dumped["default_validation_config"], str)
+            assert not isinstance(dumped["default_validation_config"], ConfigEnum)
+
+            # Check that the value matches the enum's string value
+            assert dumped["default_validation_config"] == config_value.value
+
+    def test_scalar_variable_model_dump_json_serializable(self):
+        """Test that model_dump output can be serialized to JSON."""
+        var = ScalarVariable(
+            name="test_var",
+            default_value=5.0,
+            value_range=(0.0, 10.0),
+            default_validation_config=ConfigEnum.WARN,
+            unit="meters",
+        )
+
+        dumped = var.model_dump()
+
+        # Should be able to serialize to JSON without errors
+        json_str = json.dumps(dumped)
+        assert json_str is not None
+
+        # Should be able to parse it back
+        parsed = json.loads(json_str)
+        assert parsed["name"] == "test_var"
+        assert parsed["default_value"] == 5.0
+        assert parsed["default_validation_config"] == "warn"
+        assert parsed["unit"] == "meters"
+
+    def test_scalar_variable_model_dump_yaml_serializable(self):
+        """Test that model_dump output can be serialized to YAML."""
+        var = ScalarVariable(
+            name="test_var",
+            default_value=5.0,
+            value_range=(0.0, 10.0),
+            default_validation_config=ConfigEnum.ERROR,
+            unit="seconds",
+        )
+
+        dumped = var.model_dump()
+
+        # Should be able to serialize to YAML without errors
+        yaml_str = yaml.safe_dump(dumped)
+        assert yaml_str is not None
+
+        # Should be able to parse it back
+        parsed = yaml.safe_load(yaml_str)
+        assert parsed["name"] == "test_var"
+        assert parsed["default_value"] == 5.0
+        assert parsed["default_validation_config"] == "error"
+        assert parsed["unit"] == "seconds"
+
+    def test_scalar_variable_model_dump_with_none_config(self):
+        """Test model_dump when default_validation_config defaults to NULL."""
+        var = ScalarVariable(
+            name="test_var",
+            default_value=1.0,
+            value_range=(0.0, 10.0),
+        )
+
+        dumped = var.model_dump()
+
+        # Should have the default NULL config as string
+        assert dumped["default_validation_config"] == "none"
+        assert isinstance(dumped["default_validation_config"], str)
+
+        # Should be JSON serializable
+        json_str = json.dumps(dumped)
+        parsed = json.loads(json_str)
+        assert parsed["default_validation_config"] == "none"
+
+    def test_scalar_variable_list_serialization(self):
+        """Test that a list of variables can be serialized (common use case)."""
+        variables = [
+            ScalarVariable(
+                name="var1",
+                default_value=1.0,
+                value_range=(0.0, 10.0),
+                default_validation_config=ConfigEnum.WARN,
+            ),
+            ScalarVariable(
+                name="var2",
+                default_value=2.0,
+                value_range=(0.0, 20.0),
+                default_validation_config=ConfigEnum.ERROR,
+            ),
+            ScalarVariable(
+                name="var3",
+                default_value=3.0,
+                value_range=(0.0, 30.0),
+                default_validation_config=ConfigEnum.NULL,
+            ),
+        ]
+
+        # Serialize all variables
+        dumped_vars = [var.model_dump() for var in variables]
+
+        # Should be JSON serializable
+        json_str = json.dumps(dumped_vars)
+        parsed = json.loads(json_str)
+
+        assert len(parsed) == 3
+        assert parsed[0]["default_validation_config"] == "warn"
+        assert parsed[1]["default_validation_config"] == "error"
+        assert parsed[2]["default_validation_config"] == "none"
+
+        # Should be YAML serializable
+        yaml_str = yaml.safe_dump(dumped_vars)
+        parsed_yaml = yaml.safe_load(yaml_str)
+
+        assert len(parsed_yaml) == 3
+        assert parsed_yaml[0]["default_validation_config"] == "warn"
+        assert parsed_yaml[1]["default_validation_config"] == "error"
+        assert parsed_yaml[2]["default_validation_config"] == "none"
+
+
+class TestConfigEnumValidation:
+    """Test that validate_value() properly handles ConfigEnum and string parameters."""
+
+    def test_validate_value_accepts_enum_parameter(self):
+        """Test that validate_value() accepts ConfigEnum as config parameter."""
+        var = ScalarVariable(
+            name="test_var",
+            default_value=5.0,
+            value_range=(0.0, 10.0),
+        )
+
+        # Should not raise with value in range
+        var.validate_value(7.0, config=ConfigEnum.ERROR)
+
+        # Should raise with value out of range and ERROR config
+        with pytest.raises(ValueError, match="out of valid range"):
+            var.validate_value(15.0, config=ConfigEnum.ERROR)
+
+        # Should warn with value out of range and WARN config
+        with pytest.warns(UserWarning, match="out of valid range"):
+            var.validate_value(15.0, config=ConfigEnum.WARN)
+
+        # Should not raise/warn with NULL config even if out of range
+        var.validate_value(15.0, config=ConfigEnum.NULL)  # No exception
+
+    def test_validate_value_accepts_string_parameter(self):
+        """Test that validate_value() accepts string as config parameter."""
+        var = ScalarVariable(
+            name="test_var",
+            default_value=5.0,
+            value_range=(0.0, 10.0),
+        )
+
+        # Should not raise with value in range
+        var.validate_value(7.0, config="error")
+
+        # Should raise with value out of range and "error" config
+        with pytest.raises(ValueError, match="out of valid range"):
+            var.validate_value(15.0, config="error")
+
+        # Should warn with value out of range and "warn" config
+        with pytest.warns(UserWarning, match="out of valid range"):
+            var.validate_value(15.0, config="warn")
+
+        # Should not raise/warn with "none" config even if out of range
+        var.validate_value(15.0, config="none")  # No exception
+
+    def test_validate_value_uses_default_config_when_none(self):
+        """Test that validate_value() uses default_validation_config when config=None."""
+        # Variable with WARN default
+        var_warn = ScalarVariable(
+            name="test_var",
+            default_value=5.0,
+            value_range=(0.0, 10.0),
+            default_validation_config="warn",
+        )
+
+        # Should warn when config=None (uses default "warn")
+        with pytest.warns(UserWarning, match="out of valid range"):
+            var_warn.validate_value(15.0, config=None)
+
+        # Variable with ERROR default
+        var_error = ScalarVariable(
+            name="test_var",
+            default_value=5.0,
+            value_range=(0.0, 10.0),
+            default_validation_config=ConfigEnum.ERROR,
+        )
+
+        # Should raise when config=None (uses default "error")
+        with pytest.raises(ValueError, match="out of valid range"):
+            var_error.validate_value(15.0, config=None)
+
+        # Variable with NULL default
+        var_null = ScalarVariable(
+            name="test_var",
+            default_value=5.0,
+            value_range=(0.0, 10.0),
+            default_validation_config="none",
+        )
+
+        # Should not raise/warn when config=None (uses default "none")
+        var_null.validate_value(15.0, config=None)  # No exception
+
+    def test_validate_value_explicit_config_overrides_default(self):
+        """Test that explicit config parameter overrides default_validation_config."""
+        var = ScalarVariable(
+            name="test_var",
+            default_value=5.0,
+            value_range=(0.0, 10.0),
+            default_validation_config="error",  # Default is ERROR
+        )
+
+        # Override with NULL - should not raise even though default is ERROR
+        var.validate_value(15.0, config="none")  # No exception
+
+        # Override with WARN - should warn instead of raising
+        with pytest.warns(UserWarning, match="out of valid range"):
+            var.validate_value(15.0, config=ConfigEnum.WARN)
+
+    def test_invalid_config_string_raises_error(self):
+        """Test that invalid config string raises ValueError."""
+        var = ScalarVariable(
+            name="test_var",
+            default_value=5.0,
+            value_range=(0.0, 10.0),
+        )
+
+        # Should raise ValueError for invalid config string
+        with pytest.raises(ValueError, match="'invalid' is not a valid ConfigEnum"):
+            var.validate_value(7.0, config="invalid")
