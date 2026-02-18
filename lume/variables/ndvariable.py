@@ -33,25 +33,6 @@ def _is_list_sequence(value: Any) -> bool:
     return isinstance(value, list)
 
 
-def _is_nested_sequence(value: Any) -> bool:
-    """Check if a value is a nested list structure.
-
-    Parameters
-    ----------
-    value : Any
-        The value to check.
-
-    Returns
-    -------
-    bool
-        True if the value is a list containing at least one list element,
-        False otherwise.
-    """
-    if not isinstance(value, list):
-        return False
-    return len(value) > 0 and isinstance(value[0], list)
-
-
 def _get_nested_shape(value: Any) -> Tuple[int, ...]:
     """Get the shape of a nested list structure.
 
@@ -268,14 +249,14 @@ class NDVariable(Variable):
         a different attribute name to access dtype (default is "dtype").
         The dtype must match exactly. No implicit type conversions are performed.
 
-        For nested list structures, dtype validation is skipped as these
+        For list structures, dtype validation is skipped as these
         structures don't have a formal dtype attribute.
 
         """
         if expected_dtype is None:
             return
 
-        if _is_nested_sequence(value):
+        if _is_list_sequence(value):
             return
 
         if not hasattr(value, self.dtype_attribute):
