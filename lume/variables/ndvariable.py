@@ -200,11 +200,10 @@ class NDVariable(Variable):
         return value
 
     def _validate_array_type(self, value: Any) -> None:
-        """Validate that value is the correct array type or a nested list.
+        """Validate that value is the correct array type.
 
-        This method checks that the value is either an instance of the array type
-        specified in the class's array_type attribute, or a nested list structure
-        that can represent multi-dimensional data.
+        This method checks that the value is an instance of the array type
+        specified in the class's array_type attribute.
 
         Parameters
         ----------
@@ -214,23 +213,18 @@ class NDVariable(Variable):
         Raises
         ------
         TypeError
-            If the value is neither of the expected array type nor a nested list.
+            If the value is not of the expected array type.
 
         Notes
         -----
-        The base NDVariable class accepts nested lists by default (array_type=list).
-        Subclasses can override array_type for specific array implementations
-        (e.g., np.ndarray for NumPy arrays).
-
-        Nested lists are always accepted as valid multi-dimensional data
-        structures alongside the specified array type.
+        The base NDVariable class accepts nested lists (array_type=list).
+        Subclasses like NumpyNDVariable only accept their specific array type
+        (e.g., np.ndarray) and will reject nested lists.
 
         """
-
-        # Accept either the array type or nested list structures
-        if not isinstance(value, self.array_type) and not _is_nested_sequence(value):
+        if not isinstance(value, self.array_type):
             raise TypeError(
-                f"Expected value to be a {self.array_type.__name__} or nested list, "
+                f"Expected value to be a {self.array_type.__name__}, "
                 f"but received {type(value).__name__}."
             )
 

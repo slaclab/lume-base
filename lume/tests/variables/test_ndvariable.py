@@ -104,21 +104,15 @@ class TestNDVariableWithListOfLists:
         var = NDVariable(name="test", shape=(3,))
 
         # NumPy array should be rejected by NDVariable (only accepts lists)
-        with pytest.raises(
-            TypeError, match="Expected value to be a list or nested list"
-        ):
+        with pytest.raises(TypeError, match="Expected value to be a list"):
             var.validate_value(np.array([1, 2, 3]), config="error")
 
         # Tuple should be rejected
-        with pytest.raises(
-            TypeError, match="Expected value to be a list or nested list"
-        ):
+        with pytest.raises(TypeError, match="Expected value to be a list"):
             var.validate_value((1, 2, 3), config="error")
 
         # Scalar should be rejected
-        with pytest.raises(
-            TypeError, match="Expected value to be a list or nested list"
-        ):
+        with pytest.raises(TypeError, match="Expected value to be a list"):
             var.validate_value(42, config="error")
 
     def test_list_shape_validation_trailing_dims(self):
@@ -271,47 +265,28 @@ class TestNumpyNDVariableArrayTypeValidation:
         arr = np.zeros((3, 4))
         var.validate_value(arr, config="error")  # Should not raise
 
-    def test_accept_list(self):
-        """Test validation accepts lists of lists with matching shape."""
+    def test_reject_list(self):
+        """Test validation rejects lists of lists (only accepts np.ndarray)."""
         var = NumpyNDVariable(name="test", shape=(3, 4))
-        var.validate_value(
-            [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]
-        )  # Should not raise
+        with pytest.raises(TypeError, match="Expected value to be a ndarray"):
+            var.validate_value([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
 
     def test_reject_tuple(self):
         """Test validation rejects tuples."""
         var = NumpyNDVariable(name="test", shape=(3,))
-        with pytest.raises(
-            TypeError, match="Expected value to be a ndarray or nested list"
-        ):
+        with pytest.raises(TypeError, match="Expected value to be a ndarray"):
             var.validate_value((1, 2, 3))
-
-    def test_reject_list_wrong_shape(self):
-        """Test validation rejects lists with wrong shape."""
-        var = NumpyNDVariable(name="test", shape=(3, 4))
-        with pytest.raises(ValueError, match="Expected last.*dimension"):
-            var.validate_value([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
-
-    def test_reject_ragged_list(self):
-        """Test validation rejects ragged lists (inconsistent dimensions)."""
-        var = NumpyNDVariable(name="test", shape=(3, 4))
-        with pytest.raises(ValueError, match="Inconsistent dimensions"):
-            var.validate_value([[1, 2, 3, 4], [5, 6], [7, 8, 9, 10]])
 
     def test_reject_scalar(self):
         """Test validation rejects scalar values."""
         var = NumpyNDVariable(name="test", shape=(1,))
-        with pytest.raises(
-            TypeError, match="Expected value to be a ndarray or nested list"
-        ):
+        with pytest.raises(TypeError, match="Expected value to be a ndarray"):
             var.validate_value(5.0)
 
     def test_reject_none(self):
         """Test validation rejects None."""
         var = NumpyNDVariable(name="test", shape=(3,))
-        with pytest.raises(
-            TypeError, match="Expected value to be a ndarray or nested list"
-        ):
+        with pytest.raises(TypeError, match="Expected value to be a ndarray"):
             var.validate_value(None)
 
 
