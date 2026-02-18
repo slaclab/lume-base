@@ -7,6 +7,7 @@ and the design allows for easy extensibility to support other array types
 
 """
 
+import typing
 from typing import Any, ClassVar, Optional, Tuple
 
 import numpy as np
@@ -14,6 +15,22 @@ from numpy.typing import NDArray
 from pydantic import ConfigDict, field_validator, model_validator
 
 from lume.variables.variable import ConfigEnum, Variable
+
+
+def _is_list_sequence(value: Any) -> bool:
+    """Check if a value is a list structure (nested or flat).
+
+    Parameters
+    ----------
+    value : Any
+        The value to check.
+
+    Returns
+    -------
+    bool
+        True if the value is a list, False otherwise.
+    """
+    return isinstance(value, list)
 
 
 def _is_nested_sequence(value: Any) -> bool:
@@ -27,9 +44,12 @@ def _is_nested_sequence(value: Any) -> bool:
     Returns
     -------
     bool
-        True if the value is a list, False otherwise.
+        True if the value is a list containing at least one list element,
+        False otherwise.
     """
-    return isinstance(value, list)
+    if not isinstance(value, list):
+        return False
+    return len(value) > 0 and isinstance(value[0], list)
 
 
 def _get_nested_shape(value: Any) -> Tuple[int, ...]:
@@ -63,11 +83,9 @@ def _get_nested_shape(value: Any) -> Tuple[int, ...]:
     if len(value) == 0:
         return (0,)
 
-    # Get the first element's shape
     first_elem = value[0]
     inner_shape = _get_nested_shape(first_elem)
 
-    # Check all elements have the same shape
     for elem in value[1:]:
         elem_shape = _get_nested_shape(elem)
         if elem_shape != inner_shape:
@@ -177,8 +195,6 @@ class NDVariable(Variable):
             expected_type = cls.__annotations__["dtype"]
 
             # Handle Optional types (unwrap Optional to get the actual type)
-            import typing
-
             if (
                 hasattr(typing, "get_origin")
                 and typing.get_origin(expected_type) is typing.Union
@@ -189,7 +205,6 @@ class NDVariable(Variable):
                     (arg for arg in args if arg is not type(None)), expected_type
                 )
 
-            # Check if value is an instance of the expected type
             if not isinstance(value, expected_type):
                 raise TypeError(
                     f"dtype must be a {expected_type.__name__} instance, "
@@ -260,11 +275,9 @@ class NDVariable(Variable):
         if expected_dtype is None:
             return
 
-        # Skip dtype validation for nested lists
         if _is_nested_sequence(value):
             return
 
-        # Get the actual dtype from the array value
         if not hasattr(value, self.dtype_attribute):
             raise AttributeError(
                 f"Array value does not have a '{self.dtype_attribute}' attribute"
@@ -307,9 +320,8 @@ class NDVariable(Variable):
 
         """
         if expected_shape is not None:
-            # Get the shape based on the value type
-            if _is_nested_sequence(value):
-                # For nested lists, compute shape recursively
+            if _is_list_sequence(value):
+                # For lists (nested or flat), compute shape recursively
                 actual_shape = _get_nested_shape(value)
             else:
                 # For arrays, use the .shape attribute

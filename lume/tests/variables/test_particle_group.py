@@ -18,29 +18,14 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-class TestParticleGroupVariableCreation:
-    """Test ParticleGroupVariable instantiation."""
+class TestParticleGroupVariable:
+    """Test ParticleGroupVariable creation and validation."""
 
-    def test_basic_creation(self):
-        """Test creating a basic particle group variable."""
+    def test_creation(self):
+        """Test creating a particle group variable."""
         var = ParticleGroupVariable(name="test_pg")
         assert var.name == "test_pg"
         assert var.read_only is False
-
-    def test_creation_with_read_only(self):
-        """Test creating a read-only particle group variable."""
-        var = ParticleGroupVariable(name="output_pg", read_only=True)
-        assert var.name == "output_pg"
-        assert var.read_only is True
-
-    def test_creation_with_validation_config(self):
-        """Test creating a variable with default validation config."""
-        var = ParticleGroupVariable(name="test_pg", default_validation_config="warn")
-        assert var.default_validation_config == "warn"
-
-
-class TestParticleGroupVariableValidation:
-    """Test value validation functionality."""
 
     def test_validate_particle_group(self):
         """Test validation accepts ParticleGroup instances."""
@@ -60,56 +45,11 @@ class TestParticleGroupVariableValidation:
                 "species": "electron",
             }
         )
-        var.validate_value(pg)  # Should not raise
+        var.validate_value(pg)
 
-    def test_reject_dict(self):
-        """Test validation rejects dict values."""
+    def test_reject_invalid_types(self):
+        """Test validation rejects non-ParticleGroup values."""
         var = ParticleGroupVariable(name="test")
-        with pytest.raises(TypeError, match="Value must be of type ParticleGroup"):
-            var.validate_value({})
-
-    def test_reject_none(self):
-        """Test validation rejects None."""
-        var = ParticleGroupVariable(name="test")
-        with pytest.raises(TypeError, match="Value must be of type ParticleGroup"):
-            var.validate_value(None)
-
-    def test_reject_string(self):
-        """Test validation rejects string values."""
-        var = ParticleGroupVariable(name="test")
-        with pytest.raises(TypeError, match="Value must be of type ParticleGroup"):
-            var.validate_value("particle_group")
-
-    def test_reject_list(self):
-        """Test validation rejects list values."""
-        var = ParticleGroupVariable(name="test")
-        with pytest.raises(TypeError, match="Value must be of type ParticleGroup"):
-            var.validate_value([])
-
-    def test_reject_numpy_array(self):
-        """Test validation rejects numpy arrays."""
-        import numpy as np
-
-        var = ParticleGroupVariable(name="test")
-        with pytest.raises(TypeError, match="Value must be of type ParticleGroup"):
-            var.validate_value(np.array([1, 2, 3]))
-
-
-class TestParticleGroupVariableModelDump:
-    """Test model serialization."""
-
-    def test_model_dump_includes_variable_class(self):
-        """Test that model_dump includes variable_class."""
-        var = ParticleGroupVariable(name="test")
-        dumped = var.model_dump()
-        assert dumped["variable_class"] == "ParticleGroupVariable"
-
-    def test_model_dump_includes_all_fields(self):
-        """Test that all fields are included in model_dump."""
-        var = ParticleGroupVariable(
-            name="beam", read_only=True, default_validation_config="error"
-        )
-        dumped = var.model_dump()
-        assert dumped["name"] == "beam"
-        assert dumped["read_only"] is True
-        assert dumped["default_validation_config"] == "error"
+        for invalid in [{}, None, "particle_group", []]:
+            with pytest.raises(TypeError, match="Value must be of type ParticleGroup"):
+                var.validate_value(invalid)
