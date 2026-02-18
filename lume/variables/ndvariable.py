@@ -15,12 +15,78 @@ from pydantic import ConfigDict, field_validator, model_validator
 from lume.variables.variable import ConfigEnum, Variable
 
 
+def _is_nested_sequence(value: Any) -> bool:
+    """Check if a value is a nested list structure.
+
+    Parameters
+    ----------
+    value : Any
+        The value to check.
+
+    Returns
+    -------
+    bool
+        True if the value is a list, False otherwise.
+    """
+    return isinstance(value, list)
+
+
+def _get_nested_shape(value: Any) -> Tuple[int, ...]:
+    """Get the shape of a nested list structure.
+
+    Parameters
+    ----------
+    value : Any
+        The nested list to analyze.
+
+    Returns
+    -------
+    Tuple[int, ...]
+        The shape of the nested structure.
+
+    Raises
+    ------
+    ValueError
+        If the nested structure is ragged (inconsistent dimensions).
+
+    Examples
+    --------
+    >>> _get_nested_shape([[1, 2, 3], [4, 5, 6]])
+    (2, 3)
+    >>> _get_nested_shape([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
+    (2, 2, 2)
+    """
+    if not isinstance(value, list):
+        return ()
+
+    if len(value) == 0:
+        return (0,)
+
+    # Get the first element's shape
+    first_elem = value[0]
+    inner_shape = _get_nested_shape(first_elem)
+
+    # Check all elements have the same shape
+    for elem in value[1:]:
+        elem_shape = _get_nested_shape(elem)
+        if elem_shape != inner_shape:
+            raise ValueError(
+                f"Inconsistent dimensions in nested structure: "
+                f"expected {inner_shape}, got {elem_shape}"
+            )
+
+    return (len(value),) + inner_shape
+
+
 class NDVariable(Variable):
     """Abstract base class for N-dimensional array variables.
 
     This class provides a framework for validating array-like data with specific
     shape and dtype requirements. It supports batch dimensions (leading dimensions)
     while enforcing constraints on the trailing dimensions.
+
+    Both proper array types (e.g., NumPy arrays) and nested lists are
+    accepted as valid multi-dimensional data structures.
 
     Attributes
     ----------
@@ -31,9 +97,10 @@ class NDVariable(Variable):
         Expected data type of the array. The specific type depends on the
         subclass implementation (e.g., np.dtype for NumPy arrays).
         Subclasses should override this with appropriate type annotations.
+        Note: dtype validation is skipped for nested lists.
     default_value : Any | None
         Default value for the variable. Must match the expected shape and dtype
-        if provided. Defaults to None.
+        if provided. Can be an array or nested list. Defaults to None.
     unit : str | None
         Physical unit associated with the variable (e.g., "m", "GeV", "rad").
         Defaults to None.
@@ -117,10 +184,11 @@ class NDVariable(Variable):
         return value
 
     def _validate_array_type(self, value: Any) -> None:
-        """Validate that value is the correct array type.
+        """Validate that value is the correct array type or a nested list.
 
-        This method checks that the value is an instance of the array type
-        specified in the subclass's array_type class attribute.
+        This method checks that the value is either an instance of the array type
+        specified in the subclass's array_type class attribute, or a nested
+        list structure that can represent multi-dimensional data.
 
         Parameters
         ----------
@@ -130,12 +198,15 @@ class NDVariable(Variable):
         Raises
         ------
         TypeError
-            If the value is not of the expected array type.
+            If the value is neither of the expected array type nor a nested list.
 
         Notes
         -----
         Subclasses must set the array_type class attribute to the expected
         array class (e.g., np.ndarray for NumPy arrays).
+
+        Nested lists are accepted as valid multi-dimensional data
+        structures alongside the specified array type.
 
         """
         if self.array_type is None:
@@ -143,9 +214,10 @@ class NDVariable(Variable):
                 f"{self.__class__.__name__} must set the 'array_type' class attribute"
             )
 
-        if not isinstance(value, self.array_type):
+        # Accept either the array type or nested list structures
+        if not isinstance(value, self.array_type) and not _is_nested_sequence(value):
             raise TypeError(
-                f"Expected value to be a {self.array_type.__name__}, "
+                f"Expected value to be a {self.array_type.__name__} or nested list, "
                 f"but received {type(value).__name__}."
             )
 
@@ -174,8 +246,15 @@ class NDVariable(Variable):
         a different attribute name to access dtype (default is "dtype").
         The dtype must match exactly. No implicit type conversions are performed.
 
+        For nested list structures, dtype validation is skipped as these
+        structures don't have a formal dtype attribute.
+
         """
         if expected_dtype is None:
+            return
+
+        # Skip dtype validation for nested lists
+        if _is_nested_sequence(value):
             return
 
         # Get the actual dtype from the array value
@@ -197,10 +276,12 @@ class NDVariable(Variable):
         This method allows for batch dimensions (leading dimensions) while
         enforcing that the trailing N dimensions match the expected shape.
 
+        For nested list structures, the shape is computed recursively.
+
         Parameters
         ----------
         value : Any
-            The array whose shape should be validated.
+            The array or nested list whose shape should be validated.
         expected_shape : Tuple[int, ...] | None, optional
             The expected shape for the trailing dimensions. If None,
             no shape validation is performed.
@@ -208,7 +289,8 @@ class NDVariable(Variable):
         Raises
         ------
         ValueError
-            If the trailing dimensions do not match the expected shape.
+            If the trailing dimensions do not match the expected shape, or if
+            a nested list structure has inconsistent dimensions (ragged arrays).
 
         Examples
         --------
@@ -218,7 +300,14 @@ class NDVariable(Variable):
 
         """
         if expected_shape is not None:
-            actual_shape = tuple(value.shape)
+            # Get the shape based on the value type
+            if _is_nested_sequence(value):
+                # For nested lists, compute shape recursively
+                actual_shape = _get_nested_shape(value)
+            else:
+                # For arrays, use the .shape attribute
+                actual_shape = tuple(value.shape)
+
             expected_ndim = len(expected_shape)
 
             if actual_shape[-expected_ndim:] != expected_shape:
@@ -255,7 +344,9 @@ class NDVariable(Variable):
         Parameters
         ----------
         value : Any
-            The array value to validate.
+            The array value to validate. Can be an array (e.g., np.ndarray) or
+            a nested list structure. Nested lists must have consistent
+            dimensions (non-ragged).
         config : ConfigEnum | None, optional
             The validation configuration. Defaults to None (uses default_validation_config).
             Allowed values are "none", "warn", and "error".
@@ -263,9 +354,10 @@ class NDVariable(Variable):
         Raises
         ------
         TypeError
-            If the value is not of the expected array type.
+            If the value is neither an array of the expected type nor a nested list.
         ValueError
-            If the value's dtype or shape does not match expectations.
+            If the value's dtype or shape does not match expectations, or if
+            a nested list has inconsistent dimensions (ragged arrays).
 
         """
         # Mandatory validation
