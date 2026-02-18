@@ -7,51 +7,37 @@ from lume.variables.ndvariable import NDVariable, NumpyNDVariable
 from lume.variables.variable import ConfigEnum
 
 
-# Test fixture: concrete NDVariable subclass for testing
-class GenericNDVariable(NDVariable):
-    """Generic NDVariable implementation for testing purposes.
-
-    This implementation accepts any array-like object (including lists)
-    and doesn't enforce strict dtype validation, making it ideal for
-    testing the base NDVariable functionality with lists of lists.
-    """
-
-    dtype: type = list
-    array_type: type = list
-    dtype_attribute: str = "__class__"
-
-
 class TestNDVariableWithListOfLists:
     """Test NDVariable base class with list of lists (non-NumPy arrays)."""
 
-    def test_basic_creation_generic_ndvariable(self):
-        """Test creating a basic generic ND variable."""
-        var = GenericNDVariable(name="test_list", shape=(3, 4))
+    def test_basic_creation_ndvariable(self):
+        """Test creating a basic ND variable."""
+        var = NDVariable(name="test_list", shape=(3, 4))
         assert var.name == "test_list"
         assert var.shape == (3, 4)
         assert var.default_value is None
 
     def test_list_2d_exact_shape(self):
         """Test 2D list of lists with exact shape match."""
-        var = GenericNDVariable(name="test", shape=(3, 4))
+        var = NDVariable(name="test", shape=(3, 4))
         data = [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]
         var.validate_value(data, config="error")  # Should not raise
 
     def test_list_1d(self):
         """Test 1D list."""
-        var = GenericNDVariable(name="test", shape=(5,))
+        var = NDVariable(name="test", shape=(5,))
         data = [1, 2, 3, 4, 5]
         var.validate_value(data, config="error")  # Should not raise
 
     def test_list_3d(self):
         """Test 3D nested list."""
-        var = GenericNDVariable(name="test", shape=(2, 2, 2))
+        var = NDVariable(name="test", shape=(2, 2, 2))
         data = [[[1, 2], [3, 4]], [[5, 6], [7, 8]]]
         var.validate_value(data, config="error")  # Should not raise
 
     def test_list_with_batch_dimensions(self):
         """Test list of lists with batch dimensions."""
-        var = GenericNDVariable(name="test", shape=(2, 3))
+        var = NDVariable(name="test", shape=(2, 3))
         # Shape will be (3, 2, 3) - 3 batches of (2, 3)
         data = [
             [[1, 2, 3], [4, 5, 6]],
@@ -62,33 +48,33 @@ class TestNDVariableWithListOfLists:
 
     def test_list_wrong_shape_raises(self):
         """Test that list with wrong shape raises ValueError."""
-        var = GenericNDVariable(name="test", shape=(3, 4))
+        var = NDVariable(name="test", shape=(3, 4))
         data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]  # Shape is (3, 3), not (3, 4)
         with pytest.raises(ValueError, match="Expected last.*dimension"):
             var.validate_value(data, config="error")
 
     def test_ragged_list_raises(self):
         """Test that ragged list raises ValueError."""
-        var = GenericNDVariable(name="test", shape=(3, 4))
+        var = NDVariable(name="test", shape=(3, 4))
         data = [[1, 2, 3, 4], [5, 6], [7, 8, 9, 10]]  # Inconsistent inner dimensions
         with pytest.raises(ValueError, match="Inconsistent dimensions"):
             var.validate_value(data, config="error")
 
     def test_empty_list(self):
         """Test handling of empty lists."""
-        var = GenericNDVariable(name="test", shape=(0,))
+        var = NDVariable(name="test", shape=(0,))
         data = []
         var.validate_value(data, config="error")  # Should not raise
 
     def test_list_default_value(self):
         """Test that default_value can be a list of lists."""
         data = [[1, 2, 3], [4, 5, 6]]
-        var = GenericNDVariable(name="test", shape=(2, 3), default_value=data)
+        var = NDVariable(name="test", shape=(2, 3), default_value=data)
         assert var.default_value == data
 
     def test_deeply_nested_list(self):
         """Test deeply nested list (4D)."""
-        var = GenericNDVariable(name="test", shape=(2, 2, 2, 2))
+        var = NDVariable(name="test", shape=(2, 2, 2, 2))
         data = [
             [[[1, 2], [3, 4]], [[5, 6], [7, 8]]],
             [[[9, 10], [11, 12]], [[13, 14], [15, 16]]],
@@ -97,7 +83,7 @@ class TestNDVariableWithListOfLists:
 
     def test_list_with_multiple_batch_dims(self):
         """Test list with multiple batch dimensions."""
-        var = GenericNDVariable(name="test", shape=(2, 3))
+        var = NDVariable(name="test", shape=(2, 3))
         # Shape (2, 3, 2, 3) - 2x3 batches of (2, 3)
         data = [
             [
@@ -115,9 +101,9 @@ class TestNDVariableWithListOfLists:
 
     def test_reject_non_list_types(self):
         """Test that non-list types are rejected."""
-        var = GenericNDVariable(name="test", shape=(3,))
+        var = NDVariable(name="test", shape=(3,))
 
-        # NumPy array should be rejected by GenericNDVariable
+        # NumPy array should be rejected by NDVariable (only accepts lists)
         with pytest.raises(
             TypeError, match="Expected value to be a list or nested list"
         ):
@@ -137,7 +123,7 @@ class TestNDVariableWithListOfLists:
 
     def test_list_shape_validation_trailing_dims(self):
         """Test that only trailing dimensions must match shape."""
-        var = GenericNDVariable(name="test", shape=(2, 3))
+        var = NDVariable(name="test", shape=(2, 3))
 
         # Exact match
         var.validate_value([[1, 2, 3], [4, 5, 6]], config="error")
@@ -156,14 +142,14 @@ class TestNDVariableWithListOfLists:
 
     def test_mixed_type_elements_in_list(self):
         """Test that lists with mixed element types are handled."""
-        var = GenericNDVariable(name="test", shape=(2, 3))
+        var = NDVariable(name="test", shape=(2, 3))
         # This should pass validation (shape is correct)
         data = [[1, 2.5, 3], [4, 5, 6.7]]
         var.validate_value(data, config="error")  # Should not raise
 
     def test_ragged_list_different_depths(self):
         """Test ragged list with different nesting depths."""
-        var = GenericNDVariable(name="test", shape=(2, 3))
+        var = NDVariable(name="test", shape=(2, 3))
         # One element is nested, another is not
         data = [[1, 2, 3], 4]
         with pytest.raises(ValueError, match="Inconsistent dimensions"):
@@ -171,25 +157,25 @@ class TestNDVariableWithListOfLists:
 
     def test_list_of_empty_lists(self):
         """Test list containing empty lists."""
-        var = GenericNDVariable(name="test", shape=(3, 0))
+        var = NDVariable(name="test", shape=(3, 0))
         data = [[], [], []]
         var.validate_value(data, config="error")  # Should not raise
 
     def test_single_element_list(self):
         """Test single element list."""
-        var = GenericNDVariable(name="test", shape=(1,))
+        var = NDVariable(name="test", shape=(1,))
         data = [42]
         var.validate_value(data, config="error")  # Should not raise
 
     def test_list_validation_with_none_config(self):
         """Test that validation works with None config."""
-        var = GenericNDVariable(name="test", shape=(2, 2))
+        var = NDVariable(name="test", shape=(2, 2))
         data = [[1, 2], [3, 4]]
         var.validate_value(data, config=None)  # Should use default config
 
     def test_list_validation_preserves_data(self):
         """Test that validation doesn't modify the input list."""
-        var = GenericNDVariable(name="test", shape=(2, 2))
+        var = NDVariable(name="test", shape=(2, 2))
         data = [[1, 2], [3, 4]]
         original_data = [[1, 2], [3, 4]]
         var.validate_value(data, config="error")

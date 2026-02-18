@@ -1,12 +1,13 @@
 """N-dimensional array variable definitions for LUME-model variables.
 
-This module provides abstract and concrete variable classes for handling
-N-dimensional array data, with support for NumPy arrays and potential
-extensibility for other array types (e.g., PyTorch tensors).
+This module provides concrete variable classes for handling N-dimensional
+array data. The base NDVariable class works directly with nested Python lists,
+and the design allows for easy extensibility to support other array types
+(e.g., PyTorch tensors) by subclassing NDVariable.
 
 """
 
-from typing import Any, Optional, Tuple
+from typing import Any, ClassVar, Optional, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
@@ -79,14 +80,15 @@ def _get_nested_shape(value: Any) -> Tuple[int, ...]:
 
 
 class NDVariable(Variable):
-    """Abstract base class for N-dimensional array variables.
+    """Base class for N-dimensional array variables.
 
-    This class provides a framework for validating array-like data with specific
-    shape and dtype requirements. It supports batch dimensions (leading dimensions)
-    while enforcing constraints on the trailing dimensions.
+    This class provides validation for array-like data with specific shape
+    requirements. It supports batch dimensions (leading dimensions) while
+    enforcing constraints on the trailing dimensions.
 
-    Both proper array types (e.g., NumPy arrays) and nested lists are
-    accepted as valid multi-dimensional data structures.
+    The base implementation works with nested Python lists. Subclasses can
+    specialize for specific array types (e.g., NumPy arrays, PyTorch tensors)
+    by overriding `array_type`, `dtype`, and `dtype_attribute`.
 
     Attributes
     ----------
@@ -94,24 +96,34 @@ class NDVariable(Variable):
         Expected shape of the array (per-sample, excluding batch dimensions).
         The last N dimensions of any value must match this shape.
     dtype : Any
-        Expected data type of the array. The specific type depends on the
-        subclass implementation (e.g., np.dtype for NumPy arrays).
-        Subclasses should override this with appropriate type annotations.
-        Note: dtype validation is skipped for nested lists.
+        Expected data type of the array. For the base class, this is not
+        enforced for nested lists. Subclasses should override this with
+        appropriate type annotations (e.g., np.dtype for NumPy arrays).
     default_value : Any | None
-        Default value for the variable. Must match the expected shape and dtype
-        if provided. Can be an array or nested list. Defaults to None.
+        Default value for the variable. Must match the expected shape if
+        provided. Can be a nested list or array. Defaults to None.
     unit : str | None
         Physical unit associated with the variable (e.g., "m", "GeV", "rad").
         Defaults to None.
 
     Notes
     -----
-    Subclasses must override:
+    Subclasses should override:
+    - array_type: The expected array class (default: list for nested lists)
     - dtype: With the appropriate type annotation for their array implementation
       (e.g., `dtype: np.dtype = np.float64` for NumPy arrays)
-    - array_type: The expected array class (e.g., `np.ndarray` for NumPy arrays)
     - dtype_attribute: The attribute name to access dtype (default: "dtype")
+
+    Examples
+    --------
+    >>> from lume.variables.ndvariable import NDVariable
+    >>>
+    >>> # Create a variable for 2D nested lists with shape (3, 4)
+    >>> var = NDVariable(name="my_list", shape=(3, 4))
+    >>>
+    >>> # Validate a matching nested list
+    >>> data = [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]
+    >>> var.validate_value(data, config="error")  # Passes
 
     """
 
@@ -122,9 +134,13 @@ class NDVariable(Variable):
     default_value: Optional[Any] = None
     unit: Optional[str] = None
 
-    # Class attribute that subclasses must override
-    array_type: type = None  # e.g., np.ndarray, torch.Tensor
-    dtype_attribute: str = "dtype"  # Attribute name to access dtype on array instances
+    # Class attributes - subclasses can override
+    array_type: ClassVar[type] = (
+        list  # Default to nested lists; override for np.ndarray, torch.Tensor, etc.
+    )
+    dtype_attribute: ClassVar[str] = (
+        "dtype"  # Attribute name to access dtype on array instances
+    )
 
     @field_validator("dtype", mode="before")
     @classmethod
@@ -187,8 +203,8 @@ class NDVariable(Variable):
         """Validate that value is the correct array type or a nested list.
 
         This method checks that the value is either an instance of the array type
-        specified in the subclass's array_type class attribute, or a nested
-        list structure that can represent multi-dimensional data.
+        specified in the class's array_type attribute, or a nested list structure
+        that can represent multi-dimensional data.
 
         Parameters
         ----------
@@ -202,17 +218,14 @@ class NDVariable(Variable):
 
         Notes
         -----
-        Subclasses must set the array_type class attribute to the expected
-        array class (e.g., np.ndarray for NumPy arrays).
+        The base NDVariable class accepts nested lists by default (array_type=list).
+        Subclasses can override array_type for specific array implementations
+        (e.g., np.ndarray for NumPy arrays).
 
-        Nested lists are accepted as valid multi-dimensional data
+        Nested lists are always accepted as valid multi-dimensional data
         structures alongside the specified array type.
 
         """
-        if self.array_type is None:
-            raise NotImplementedError(
-                f"{self.__class__.__name__} must set the 'array_type' class attribute"
-            )
 
         # Accept either the array type or nested list structures
         if not isinstance(value, self.array_type) and not _is_nested_sequence(value):
@@ -411,4 +424,4 @@ class NumpyNDVariable(NDVariable):
 
     default_value: Optional[NDArray] = None
     dtype: np.dtype = np.float64
-    array_type: type = np.ndarray
+    array_type: ClassVar[type] = np.ndarray
