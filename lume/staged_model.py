@@ -72,23 +72,6 @@ class StagedModel(LUMEModel):
             for variable_name, variable in model.supported_variables.items()
         }
 
-    def initialize(self):
-        """
-        Initialize model by doing a first pass through the models to
-        get and set the beam distributions at the entrance and exit of each model in the sequence.
-
-        """
-        # run the first model, get the output beam distribution
-        self.lume_model_instances[0].set()
-        current_beam_distribution = self.lume_model_instances[0].get(["beam_output"])[
-            "beam_output"
-        ]
-
-        for model in self.lume_model_instances[1:]:
-            # set the input beam distribution for the model
-            model.set({"beam_input": current_beam_distribution})
-            current_beam_distribution = model.get(["beam_output"])["beam_output"]
-
     def _set(self, values: dict[str, Any]) -> None:
         """
         Set control parameters of the simulator by staging the input values through the sequence of LUMEModel instances.
