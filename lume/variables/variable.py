@@ -6,13 +6,13 @@ but they can be used to validate encountered values.
 """
 
 from abc import ABC, abstractmethod
-from enum import StrEnum
+from enum import Enum
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict
 
 
-class ConfigEnum(StrEnum):
+class ConfigEnum(str, Enum):
     """Enum for configuration options during validation."""
 
     NULL = "none"
