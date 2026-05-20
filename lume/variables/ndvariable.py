@@ -9,7 +9,7 @@ array_type, dtype, and dtype_attribute.
 """
 
 import typing
-from typing import Any, ClassVar, List, Optional, Self, Tuple
+from typing import Any, ClassVar, List, Optional, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
@@ -302,7 +302,7 @@ class NDVariable(Variable):
                 raise ValueError(f"Expected shape {expected_shape}, got {actual_shape}")
 
     @model_validator(mode="after")
-    def validate_default_value(self) -> Self:
+    def validate_default_value(self) -> "NDVariable":
         """Validate the default_value if provided.
 
         Returns
