@@ -29,5 +29,6 @@ jobs:
       - name: List Python package versions
         run: uv pip list
       - name: Run tests
+        working-directory: ${{ runner.temp }}
         run: |
-          uv run --no-editable pytest --pyargs lume.tests
+          uv run --project ${{ github.workspace }} --no-sync pytest --pyargs lume.tests
