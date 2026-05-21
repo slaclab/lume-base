@@ -2,7 +2,11 @@ from typing import Any
 
 import numpy as np
 import pytest
-from pmd_beamphysics import ParticleGroup
+
+try:
+    from beamphysics import ParticleGroup
+except ImportError:
+    from pmd_beamphysics import ParticleGroup
 
 from lume.model import LUMEModel
 from lume.staged_model import FinalParticlesMixIn, InitialParticlesMixIn, StagedModel
