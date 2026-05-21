@@ -25,9 +25,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies and package
         run: |
-          uv sync --extra dev
+          uv sync --extra dev --no-editable
       - name: List Python package versions
         run: uv pip list
       - name: Run tests
         run: |
-          uv run pytest
+          uv run --no-editable pytest --pyargs lume.tests
