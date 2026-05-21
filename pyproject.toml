@@ -41,7 +41,7 @@ docs = [
 ]
 
 [tool.setuptools.packages.find]
-where = ["lume*"]
+include = ["lume*"]
 namespaces = false
 
 [tool.setuptools.package-data]
