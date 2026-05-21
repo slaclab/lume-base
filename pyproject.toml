@@ -52,8 +52,9 @@ docs = [
     "pytkdocs[numpy-style]",
 ]
 
-[tool.setuptools]
-packages = ["lume", "lume.parsers", "lume.serializers"]
+[tool.setuptools.packages.find]
+where = ["src"]
+namespaces = false
 
 [tool.setuptools.package-data]
 lume = ["py.typed"]
