@@ -11,6 +11,8 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict
 
+from lume.actions import Action
+
 
 class ConfigEnum(str, Enum):
     """Enum for configuration options during validation."""
@@ -33,7 +35,9 @@ class Variable(BaseModel, ABC):
         Default validation configuration to use when validating values.
         Valid options are "none" (no validation), "warn" (warn on invalid values),
         or "error" (raise error on invalid values). Defaults to "none".
-
+    action: Action[SimulatorT]
+        The action associated with the variable, which defines how to get and set the variable's value in a simulator.
+        
     """
 
     # store/serialize as string
@@ -42,6 +46,7 @@ class Variable(BaseModel, ABC):
     name: str
     read_only: bool = False
     default_validation_config: ConfigEnum = "none"
+    action: Action | None = None
 
     def _validation_config_as_enum(self, config: ConfigEnum = None) -> ConfigEnum:
         """Convert validation config to enum type.
@@ -61,6 +66,44 @@ class Variable(BaseModel, ABC):
         if isinstance(config, str):
             config = ConfigEnum(config)
         return config
+    
+    def get(self, simulator: Any) -> Any:
+        """Get the value of the variable from the simulator using the associated action.
+
+        Parameters
+        ----------
+        simulator: Any
+            The simulator object to get the variable's value from.
+
+        Returns
+        -------
+        Any
+            The value of the variable obtained from the simulator.
+        """
+        if self.action is None:
+            raise ValueError(f"No action defined for variable '{self.name}'")
+        return self.action.get(simulator, self)
+    
+    def set(self, simulator: Any, value: Any) -> None:
+        """Set the value of the variable in the simulator using the associated action.
+
+        Parameters
+        ----------
+        simulator: Any
+            The simulator object to set the variable's value in.
+        value: Any
+            The value to set for the variable.
+
+        Raises
+        ------
+        ValueError
+            If the variable is read-only or if no action is defined for the variable.
+        """
+        if self.read_only:
+            raise ValueError(f"Variable '{self.name}' is read-only and cannot be set.")
+        if self.action is None:
+            raise ValueError(f"No action defined for variable '{self.name}'")
+        self.action.set(simulator, self, value)
 
     @abstractmethod
     def validate_value(self, value: Any, config: ConfigEnum = None):
