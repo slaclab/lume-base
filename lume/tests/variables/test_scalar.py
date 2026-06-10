@@ -46,6 +46,7 @@ class TestScalarVariable:
         var.validate_value(5.0)
         var.validate_value(5)
         var.validate_value(np.float64(5.0))
+        var.validate_value(np.int64(5))
 
     def test_reject_non_numeric_types(self):
         """Test validation rejects non-numeric values."""

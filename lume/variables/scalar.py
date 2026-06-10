@@ -6,6 +6,9 @@ from pydantic import field_validator, model_validator
 from lume.variables.variable import Variable, ConfigEnum
 
 
+ScalarType = float | int | np.floating | np.integer
+
+
 class ScalarVariable(Variable):
     """Variable for float values.
 
@@ -70,15 +73,15 @@ class ScalarVariable(Variable):
             self._validate_value_is_within_range(value, config=config)
 
     @staticmethod
-    def _validate_value_type(value: float):
-        if not isinstance(value, (int, float, np.floating)) or isinstance(value, bool):
+    def _validate_value_type(value: ScalarType):
+        if not isinstance(value, ScalarType) or isinstance(value, bool):
             raise TypeError(
-                f"Expected value to be of type {float} or {np.float64}, but received {type(value)}."
+                f"Expected value to be of type {ScalarType} or bool, but received {type(value)}."
             )
 
     def _validate_value_is_within_range(self, value: float, config: ConfigEnum = None):
         config = self._validation_config_as_enum(config)
-
+    
         if not self._value_is_within_range(value):
             error_message = (
                 "Value ({}) of '{}' is out of valid range: ([{},{}]).".format(
