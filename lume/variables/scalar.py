@@ -81,9 +81,11 @@ class ScalarVariable(Variable, Generic[ScalarT]):
                 f"Expected value to be of type {ScalarType} or bool, but received {type(value)}."
             )
 
-    def _validate_value_is_within_range(self, value: ScalarT, config: ConfigEnum | None = None):
+    def _validate_value_is_within_range(
+        self, value: ScalarT, config: ConfigEnum | None = None
+    ):
         config = self._validation_config_as_enum(config)
-    
+
         if not self._value_is_within_range(value):
             error_message = (
                 "Value ({}) of '{}' is out of valid range: ([{},{}]).".format(

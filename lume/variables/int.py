@@ -1,6 +1,5 @@
-from typing import TypeVar, Union
+from typing import TypeVar
 
-from pydantic import field_validator, model_validator
 import numpy as np
 
 from lume.variables.scalar import ScalarVariable
