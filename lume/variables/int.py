@@ -5,8 +5,8 @@ import numpy as np
 
 from lume.variables.scalar import ScalarVariable
 
-IntT = TypeVar("IntT", bound=Union[int, np.integer])
-IntType = Union[int, np.integer]  # for isinstance type
+IntType = int | np.integer  # for isinstance type
+IntT = TypeVar("IntT", bound=IntType)
 
 
 class IntVariable(ScalarVariable[IntT]):

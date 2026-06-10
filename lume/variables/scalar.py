@@ -1,4 +1,4 @@
-from typing import Generic, TypeVar, Union
+from typing import Generic, TypeVar
 import warnings
 
 import numpy as np
@@ -7,8 +7,8 @@ from pydantic import field_validator, model_validator
 from lume.variables.variable import Variable, ConfigEnum
 
 
-ScalarT = TypeVar("ScalarT", bound=Union[float, int, np.floating, np.integer])
-ScalarType = Union[float, int, np.floating, np.integer]  # for isinstance type
+ScalarType = float | int | np.floating | np.integer  # for isinstance type
+ScalarT = TypeVar("ScalarT", bound=ScalarType)
 
 
 class ScalarVariable(Variable, Generic[ScalarT]):
@@ -45,7 +45,7 @@ class ScalarVariable(Variable, Generic[ScalarT]):
             self.validate_value(self.default_value, ConfigEnum.ERROR)
         return self
 
-    def validate_value(self, value: ScalarT, config: ConfigEnum = None):
+    def validate_value(self, value: ScalarT, config: ConfigEnum | None = None):
         """Validates the given value.
 
         Parameters
@@ -81,7 +81,7 @@ class ScalarVariable(Variable, Generic[ScalarT]):
                 f"Expected value to be of type {ScalarType} or bool, but received {type(value)}."
             )
 
-    def _validate_value_is_within_range(self, value: ScalarT, config: ConfigEnum = None):
+    def _validate_value_is_within_range(self, value: ScalarT, config: ConfigEnum | None = None):
         config = self._validation_config_as_enum(config)
     
         if not self._value_is_within_range(value):
