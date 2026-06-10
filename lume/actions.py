@@ -1,13 +1,27 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Generic, TypeVar, Self
+from typing import Any, Generic, TypeVar
 
-from pydantic import BaseModel, model_validator
-
-from lume.exceptions import ReadOnlyError
+from pydantic import BaseModel
 
 SimulatorT = TypeVar("SimulatorT")
+
+
+def set_action(simulator: SimulatorT, variable, value: Any):
+    """ execute the set action for a variable, if it exists. """
+    if variable.read_only:
+        raise ValueError(f"Variable {variable.name} is read-only and cannot be set.")
+    if variable.action is None:
+        raise ValueError(f"Variable {variable.name} does not have an associated action to set its value.")
+    variable.action.set(simulator, variable, value)
+
+
+def get_action(simulator: SimulatorT, variable) -> Any:
+    """ execute the get action for a variable, if it exists. """
+    if variable.action is None:
+        raise ValueError(f"Variable {variable.name} does not have an associated action to get its value.")
+    return variable.action.get(simulator, variable)
 
 
 class Action(ABC, BaseModel, Generic[SimulatorT]):
