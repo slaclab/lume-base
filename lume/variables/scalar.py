@@ -1,3 +1,4 @@
+from typing import Generic, TypeVar
 import warnings
 
 import numpy as np
@@ -6,7 +7,11 @@ from pydantic import field_validator, model_validator
 from lume.variables.variable import Variable, ConfigEnum
 
 
-class ScalarVariable(Variable):
+ScalarType = float | int | np.floating | np.integer  # for isinstance type
+ScalarT = TypeVar("ScalarT", bound=ScalarType)
+
+
+class ScalarVariable(Variable, Generic[ScalarT]):
     """Variable for float values.
 
     Attributes
@@ -40,12 +45,12 @@ class ScalarVariable(Variable):
             self.validate_value(self.default_value, ConfigEnum.ERROR)
         return self
 
-    def validate_value(self, value: float, config: ConfigEnum = None):
+    def validate_value(self, value: ScalarT, config: ConfigEnum | None = None):
         """Validates the given value.
 
         Parameters
         ----------
-        value : float
+        value : float | int | np.floating | np.integer
             The value to be validated.
         config : ConfigEnum, optional
             The configuration for validation. Defaults to None.
@@ -70,13 +75,15 @@ class ScalarVariable(Variable):
             self._validate_value_is_within_range(value, config=config)
 
     @staticmethod
-    def _validate_value_type(value: float):
-        if not isinstance(value, (int, float, np.floating)) or isinstance(value, bool):
+    def _validate_value_type(value: ScalarT):
+        if not isinstance(value, ScalarType) or isinstance(value, bool):
             raise TypeError(
-                f"Expected value to be of type {float} or {np.float64}, but received {type(value)}."
+                f"Expected value to be of type {ScalarType} or bool, but received {type(value)}."
             )
 
-    def _validate_value_is_within_range(self, value: float, config: ConfigEnum = None):
+    def _validate_value_is_within_range(
+        self, value: ScalarT, config: ConfigEnum | None = None
+    ):
         config = self._validation_config_as_enum(config)
 
         if not self._value_is_within_range(value):
