@@ -1,104 +1,140 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Generic, TypeVar, Self
+from typing import Any, Generic, TypeVar
 
-from pydantic import BaseModel, model_validator
+from pydantic import field_validator
 
-from lume.variables import Variable
 from lume.exceptions import ReadOnlyError
 
 SimulatorT = TypeVar("SimulatorT")
 
 
-class Action(ABC, BaseModel, Generic[SimulatorT]):
-    """Base for read-only actions over a generic simulator type.
+class Action(ABC, Generic[SimulatorT]):
+    """
+    Parent class for testing if something is an Action.
 
-    Subclasses must implement ``_get``.  The ``model_validator`` enforces
-    that the associated variable is marked read-only at construction time.
+    Do not subclass directly. Use ``ReadOnlyActionMixin`` or
+    ``WritableActionMixin`` mixed into a ``Variable`` subclass.
     """
 
-    var: Variable
 
-    @property
-    def name(self) -> str:
-        return self.var.name
+class ReadOnlyActionMixin(Action[SimulatorT], Generic[SimulatorT]):
+    """Mixin for read-only variable-actions.
 
-    @property
-    def read_only(self) -> bool:
-        return getattr(self.var, "read_only")
+    Mix into a ``Variable`` subclass. The variable must be constructed with
+    ``read_only=True``; the field validator enforces this at construction time.
+    Subclasses must implement ``_get``.
+    """
 
-    @model_validator(mode="after")
-    def _check_var(self) -> "Action[SimulatorT]":
-        if not self.var.read_only:
-            raise ReadOnlyError(f"{type(self).__name__} requires a read-only variable")
-        return self
+    @field_validator("read_only", mode="after")
+    @classmethod
+    def _check_read_only(cls, v: bool) -> bool:
+        if not v:
+            raise ReadOnlyError(f"{cls.__name__} requires read_only=True")
+        return v
 
     @abstractmethod
     def _get(self, simulator: SimulatorT) -> Any:
-        """
-        The child-class implementation of the get method. Override this method and
-        not `get` for defining the action's functionality.
+        """Return the current value from ``simulator``. User-implemented version, not ``get``.
 
         Parameters
         ----------
-        simulator: SimulatorT
-            The simulator object the parameter is pulled from
+        simulator : SimulatorT
+            The simulator to read from.
+
+        Returns
+        -------
+        Any
+            The current value of this variable in the simulator.
         """
         ...
 
     def get(self, simulator: SimulatorT) -> Any:
-        """
-        Outside facing get method.
+        """Return the current value from ``simulator``. Do not override, put your implementation in _get instead.
 
         Parameters
         ----------
-        simulator: SimulatorT
-            The simulator object the parameter is pulled from
+        simulator : SimulatorT
+            The simulator to read from.
+
+        Returns
+        -------
+        Any
+            The current value of this variable in the simulator.
         """
         return self._get(simulator)
 
 
-class WritableAction(Action[SimulatorT], Generic[SimulatorT]):
-    """Base for actions that support both get and set.
+class WritableActionMixin(Action[SimulatorT], Generic[SimulatorT]):
+    """Mixin for writable variable-actions.
 
-    Overrides ``_check_var`` so writable variables are accepted.
-    Subclasses must implement ``get`` and ``set``.
+    Mix into a ``Variable`` subclass. Subclasses must implement ``_get`` and
+    ``_set``.
 
-    The model calls ``set``, which enforces the read-only guard before
-    delegating to ``_set``.
+    Calling ``set`` on a variable with ``read_only=True`` raises
+    ``ReadOnlyError`` at runtime.
     """
 
-    @model_validator(mode="after")
-    def _check_var(self) -> Self:
-        return self
-
     @abstractmethod
-    def _set(self, simulator: SimulatorT, value: Any) -> None:
-        """
-        The child-class implementation of the set method. Overrid this method and
-        not `set` for defining the action's set method.
+    def _get(self, simulator: SimulatorT) -> Any:
+        """Return the current value from ``simulator``. User implemented version.
 
         Parameters
         ----------
-        simulator: SimulatorT
-            The simulator object
-        value: Any
-            The value the variable associated with the action is being set to
+        simulator : SimulatorT
+            The simulator to read from.
+
+        Returns
+        -------
+        Any
+            The current value of this variable in the simulator.
         """
         ...
 
-    def set(self, simulator: SimulatorT, value: Any) -> None:
-        """
-        Outside facing set method with read-only checking.
+    @abstractmethod
+    def _set(self, simulator: SimulatorT, value: Any) -> None:
+        """Write ``value`` to ``simulator``. User implemented version.
 
         Parameters
         ----------
-        simulator: SimulatorT
-            The simulator object
-        value: Any
-            The value the variable associated with the action is being set to
+        simulator : SimulatorT
+            The simulator to write to.
+        value : Any
+            The value to assign to this variable in the simulator.
         """
-        if self.var.read_only:
+        ...
+
+    def get(self, simulator: SimulatorT) -> Any:
+        """Return the current value from ``simulator``. Please override _get instead of this.
+
+        Parameters
+        ----------
+        simulator : SimulatorT
+            The simulator to read from.
+
+        Returns
+        -------
+        Any
+            The current value of this variable in the simulator.
+        """
+        return self._get(simulator)
+
+    def set(self, simulator: SimulatorT, value: Any) -> None:
+        """Write ``value`` to ``simulator``. Please override _set instead of this.
+
+        Parameters
+        ----------
+        simulator : SimulatorT
+            The simulator to write to.
+        value : Any
+            The value to assign to this variable in the simulator.
+
+        Raises
+        ------
+        ReadOnlyError
+            If this variable has ``read_only=True``.
+        """
+        if self.read_only:
             raise ReadOnlyError(f"'{self.name}' is read-only")
         self._set(simulator, value)
