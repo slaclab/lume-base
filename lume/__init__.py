@@ -1,9 +1,10 @@
 from importlib.metadata import PackageNotFoundError, version
 
-from lume.actions import Action, ReadOnlyActionMixin, WritableActionMixin
+from lume.actions import Action, ActionModel, ReadOnlyActionMixin, WritableActionMixin
 
 __all__ = [
     "Action",
+    "ActionModel",
     "ReadOnlyActionMixin",
     "WritableActionMixin",
 ]

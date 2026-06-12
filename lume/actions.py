@@ -6,6 +6,8 @@ from typing import Any, Generic, TypeVar
 from pydantic import field_validator
 
 from lume.exceptions import ReadOnlyError
+from lume.model import LUMEModel
+from lume.variables import Variable
 
 SimulatorT = TypeVar("SimulatorT")
 
@@ -138,3 +140,95 @@ class WritableActionMixin(Action[SimulatorT], Generic[SimulatorT]):
         if self.read_only:
             raise ReadOnlyError(f"'{self.name}' is read-only")
         self._set(simulator, value)
+
+
+class ActionModel(LUMEModel, Generic[SimulatorT]):
+    """LUMEModel backed by a collection of action variables.
+
+    Each entry in ``action_variables`` must be an ``Action`` instance (i.e. a
+    ``Variable`` subclass that also mixes in ``ReadOnlyActionMixin`` or
+    ``WritableActionMixin``). The model delegates ``get`` and ``set`` calls to
+    the corresponding action variable.
+
+    Parameters
+    ----------
+    simulator : SimulatorT
+        The simulator object passed through to each action variable's
+        ``get`` / ``set`` implementation.
+    action_variables : list[Variable]
+        The action variables managed by this model.
+
+    Raises
+    ------
+    ValueError
+        If any entry in ``action_variables`` is not an ``Action`` instance.
+    """
+
+    def __init__(
+        self,
+        simulator: SimulatorT,
+        action_variables: list[Variable],
+    ) -> None:
+        self.simulator = simulator
+        self._action_variable_by_name: dict[str, Variable] = {}
+        for av in action_variables:
+            self.register_action_variable(av)
+
+    @property
+    def supported_variables(self) -> dict[str, Variable]:
+        return dict(self._action_variable_by_name)
+
+    def _get(self, names: list[str]) -> dict[str, Any]:
+        return {
+            name: self._action_variable_by_name[name].get(self.simulator)
+            for name in names
+        }
+
+    def _set(self, values: dict[str, Any]) -> None:
+        for name, value in values.items():
+            self._action_variable_by_name[name]._set(self.simulator, value)
+
+    def reset(self) -> None:
+        self.set(
+            {
+                av.name: av.default_value
+                for av in self._action_variable_by_name.values()
+                if isinstance(av, WritableActionMixin) and hasattr(av, "default_value")
+            }
+        )
+
+    def register_action_variable(self, action_variable: Variable) -> None:
+        """Add an action variable to the model, replacing any with the same name.
+
+        Parameters
+        ----------
+        action_variable : Variable
+            The action variable to register. Must be an ``Action`` instance.
+
+        Raises
+        ------
+        ValueError
+            If ``action_variable`` is not an ``Action`` instance.
+        """
+        if not isinstance(action_variable, Action):
+            raise ValueError(
+                f"Expected an Action instance, got {type(action_variable).__name__!r}"
+            )
+        self._action_variable_by_name[action_variable.name] = action_variable
+
+    def unregister_action_variable(self, name: str) -> None:
+        """Remove an action variable from the model by name.
+
+        Parameters
+        ----------
+        name : str
+            Name of the action variable to remove.
+
+        Raises
+        ------
+        KeyError
+            If no action variable with the given name is registered.
+        """
+        if name not in self._action_variable_by_name:
+            raise KeyError(f"No action variable named '{name}' is registered")
+        del self._action_variable_by_name[name]

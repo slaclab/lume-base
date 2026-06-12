@@ -1,6 +1,6 @@
 import pytest
 
-from lume.actions import Action, ReadOnlyActionMixin, WritableActionMixin
+from lume.actions import Action, ActionModel, ReadOnlyActionMixin, WritableActionMixin
 from lume.exceptions import ReadOnlyError
 from lume.variables.scalar import ScalarVariable
 
@@ -71,3 +71,60 @@ class TestWritableActionMixin:
         var = MockWritableVar(name="y", read_only=True)
         with pytest.raises(ReadOnlyError):
             var.set(sim, 7.0)
+
+
+class TestActionModel:
+    def _make_model(self):
+        sim = MockSim()
+        avs = [
+            MockWritableVar(name="x", default_value=1.0),
+            MockReadOnlyVar(name="y", read_only=True),
+        ]
+        return ActionModel(sim, avs)
+
+    def test_supported_variables(self):
+        model = self._make_model()
+        assert set(model.supported_variables) == {"x", "y"}
+
+    def test_get(self):
+        model = self._make_model()
+        model.simulator.values["y"] = 9.9
+        assert model.get("y") == 9.9
+
+    def test_set(self):
+        model = self._make_model()
+        model.set({"x": 5.0})
+        assert model.simulator.values["x"] == 5.0
+
+    def test_set_read_only_raises(self):
+        model = self._make_model()
+        with pytest.raises(ValueError):
+            model.set({"y": 1.0})
+
+    def test_reset(self):
+        model = self._make_model()
+        model.simulator.values["x"] = 99.0
+        model.reset()
+        assert model.simulator.values["x"] == 1.0
+
+    def test_register_replaces_existing(self):
+        model = self._make_model()
+        new_x = MockWritableVar(name="x", default_value=42.0)
+        model.register_action_variable(new_x)
+        assert model._action_variable_by_name["x"] is new_x
+        assert len(model.supported_variables) == 2
+
+    def test_register_rejects_non_action(self):
+        model = self._make_model()
+        with pytest.raises(ValueError):
+            model.register_action_variable(ScalarVariable(name="plain"))
+
+    def test_unregister(self):
+        model = self._make_model()
+        model.unregister_action_variable("x")
+        assert "x" not in model.supported_variables
+
+    def test_unregister_missing_raises(self):
+        model = self._make_model()
+        with pytest.raises(KeyError):
+            model.unregister_action_variable("nonexistent")
