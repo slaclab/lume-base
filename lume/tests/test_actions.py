@@ -42,7 +42,7 @@ class TestReadOnlyActionMixin:
         sim = MockSim()
         sim.values["x"] = 3.14
         var = MockReadOnlyVar(name="x", read_only=True)
-        assert var.get(sim) == 3.14
+        assert var._get(sim) == 3.14
 
     def test_no_set_method(self):
         var = MockReadOnlyVar(name="x", read_only=True)
@@ -58,19 +58,13 @@ class TestWritableActionMixin:
         sim = MockSim()
         sim.values["y"] = 42.0
         var = MockWritableVar(name="y")
-        assert var.get(sim) == 42.0
+        assert var._get(sim) == 42.0
 
     def test_set(self):
         sim = MockSim()
         var = MockWritableVar(name="y")
-        var.set(sim, 7.0)
+        var._set(sim, 7.0)
         assert sim.values["y"] == 7.0
-
-    def test_set_raises_when_read_only(self):
-        sim = MockSim()
-        var = MockWritableVar(name="y", read_only=True)
-        with pytest.raises(ReadOnlyError):
-            var.set(sim, 7.0)
 
 
 class TestActionModel:
@@ -98,7 +92,7 @@ class TestActionModel:
 
     def test_set_read_only_raises(self):
         model = self._make_model()
-        with pytest.raises(ValueError):
+        with pytest.raises(ReadOnlyError):
             model.set({"y": 1.0})
 
     def test_reset(self):
