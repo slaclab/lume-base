@@ -52,21 +52,6 @@ class ReadOnlyActionMixin(Action[SimulatorT], Generic[SimulatorT]):
         """
         ...
 
-    def get(self, simulator: SimulatorT) -> Any:
-        """Return the current value from ``simulator``. Do not override, put your implementation in _get instead.
-
-        Parameters
-        ----------
-        simulator : SimulatorT
-            The simulator to read from.
-
-        Returns
-        -------
-        Any
-            The current value of this variable in the simulator.
-        """
-        return self._get(simulator)
-
 
 class WritableActionMixin(Action[SimulatorT], Generic[SimulatorT]):
     """Mixin for writable variable-actions.
@@ -107,40 +92,6 @@ class WritableActionMixin(Action[SimulatorT], Generic[SimulatorT]):
         """
         ...
 
-    def get(self, simulator: SimulatorT) -> Any:
-        """Return the current value from ``simulator``. Please override _get instead of this.
-
-        Parameters
-        ----------
-        simulator : SimulatorT
-            The simulator to read from.
-
-        Returns
-        -------
-        Any
-            The current value of this variable in the simulator.
-        """
-        return self._get(simulator)
-
-    def set(self, simulator: SimulatorT, value: Any) -> None:
-        """Write ``value`` to ``simulator``. Please override _set instead of this.
-
-        Parameters
-        ----------
-        simulator : SimulatorT
-            The simulator to write to.
-        value : Any
-            The value to assign to this variable in the simulator.
-
-        Raises
-        ------
-        ReadOnlyError
-            If this variable has ``read_only=True``.
-        """
-        if self.read_only:
-            raise ReadOnlyError(f"'{self.name}' is read-only")
-        self._set(simulator, value)
-
 
 class ActionModel(LUMEModel, Generic[SimulatorT]):
     """LUMEModel backed by a collection of action variables.
@@ -180,7 +131,7 @@ class ActionModel(LUMEModel, Generic[SimulatorT]):
 
     def _get(self, names: list[str]) -> dict[str, Any]:
         return {
-            name: self._action_variable_by_name[name].get(self.simulator)
+            name: self._action_variable_by_name[name]._get(self.simulator)
             for name in names
         }
 
@@ -189,7 +140,7 @@ class ActionModel(LUMEModel, Generic[SimulatorT]):
             self._action_variable_by_name[name]._set(self.simulator, value)
 
     def reset(self) -> None:
-        self.set(
+        self._set(
             {
                 av.name: av.default_value
                 for av in self._action_variable_by_name.values()
