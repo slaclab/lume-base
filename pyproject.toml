@@ -38,6 +38,7 @@ docs = [
   "mkdocs-material",
   "livereload",
   "pytkdocs[numpy-style]",
+  "mkdocs-jupyter",
 ]
 
 [tool.setuptools.packages.find]

@@ -9,6 +9,10 @@ nav:
       - Base: api/base.md
       - CommandWrapper: api/command_wrapper.md
       - Tools: api/tools.md
+    - Examples:
+      - Input Parsing: examples/input_parsing.ipynb
+      - Lume Model: examples/lume_model.ipynb
+      - Actions: examples/lume_model_actions.ipynb
 
 theme:
   icon:
@@ -46,6 +50,7 @@ extra:
 
 plugins:
     - search
+    - mkdocs-jupyter
     - mkdocstrings:
         default_handler: python
         handlers:
