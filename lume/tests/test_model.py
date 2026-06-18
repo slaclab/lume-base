@@ -4,6 +4,7 @@ import yaml
 import pytest
 from lume.model import LUMEModel
 from lume.variables import Variable, ScalarVariable, ConfigEnum
+from lume.exceptions import ReadOnlyError
 
 
 # Mock Variable subclass for testing
@@ -148,7 +149,7 @@ class TestLUMEModel:
 
     def test_set_read_only_variable(self, model):
         """Test setting a read-only variable raises ValueError."""
-        with pytest.raises(ValueError, match="Variable 'output_var' is read-only"):
+        with pytest.raises(ReadOnlyError, match="Variable 'output_var' is read-only"):
             model.set({"output_var": 100.0})
 
     def test_set_variable_validation_error(self, model):

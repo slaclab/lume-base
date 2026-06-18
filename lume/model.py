@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 from lume.variables import Variable
+from lume.exceptions import ReadOnlyError
 
 
 class LUMEModel(ABC):
@@ -121,7 +122,9 @@ class LUMEModel(ABC):
                     )
 
                 if variable.read_only:
-                    raise ValueError(f"Variable '{name}' is read-only. Cannot be set.")
+                    raise ReadOnlyError(
+                        f"Variable '{name}' is read-only. Cannot be set."
+                    )
                 try:
                     variable.validate_value(values[name])
                 except (ValueError, TypeError) as exc:
