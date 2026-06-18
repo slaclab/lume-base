@@ -213,13 +213,18 @@ class ActionModel(LUMEModel, Generic[SimulatorT]):
             )
         self._action_variable_by_name[action_variable.name] = action_variable
 
-    def unregister_action_variable(self, name: str) -> None:
+    def unregister_action_variable(self, name: str) -> ActionVariable[SimulatorT]:
         """Remove an action variable from the model by name.
 
         Parameters
         ----------
         name : str
             Name of the action variable to remove.
+
+        Returns
+        -------
+        ActionVariable
+            The removed action variable.
 
         Raises
         ------
@@ -228,4 +233,4 @@ class ActionModel(LUMEModel, Generic[SimulatorT]):
         """
         if name not in self._action_variable_by_name:
             raise KeyError(f"No action variable named '{name}' is registered")
-        del self._action_variable_by_name[name]
+        return self._action_variable_by_name.pop(name)

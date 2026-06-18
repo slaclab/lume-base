@@ -106,8 +106,9 @@ class TestActionModel:
             action_model.register_action_variable(ScalarVariable(name="plain"))
 
     def test_unregister(self, action_model):
-        action_model.unregister_action_variable("x")
+        removed = action_model.unregister_action_variable("x")
         assert "x" not in action_model.supported_variables
+        assert removed.name == "x"
 
     def test_unregister_missing_raises(self, action_model):
         with pytest.raises(KeyError):
