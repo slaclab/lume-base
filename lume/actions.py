@@ -102,7 +102,9 @@ class WritableActionMixin(Action[SimulatorT], Generic[SimulatorT]):
 # outside of this module.
 
 
-class ReadOnlyActionVariable(ReadOnlyActionMixin, Variable):
+class ReadOnlyActionVariable(
+    ReadOnlyActionMixin[SimulatorT], Variable, Generic[SimulatorT]
+):
     def __init__(self, *args, **kwargs):
         raise NotImplementedError("This is a type hinting stub")
 
@@ -110,19 +112,23 @@ class ReadOnlyActionVariable(ReadOnlyActionMixin, Variable):
         raise NotImplementedError("This is a type hinting stub")
 
 
-class WritableActionVariable(WritableActionMixin, Variable):
+class WritableActionVariable(
+    WritableActionMixin[SimulatorT], Variable, Generic[SimulatorT]
+):
     def __init__(self, *args, **kwargs):
         raise NotImplementedError("This is a type hinting stub")
 
     def _get(self, simulator: SimulatorT) -> Any:
         raise NotImplementedError("This is a type hinting stub")
 
-    def _set(self, simulator: SimulatorT) -> Any:
+    def _set(self, simulator: SimulatorT, value: Any) -> None:
         raise NotImplementedError("This is a type hinting stub")
 
 
 # Type which will have the correct interface from user-provided variables
-ActionVariable = Union[ReadOnlyActionVariable, WritableActionVariable]
+ActionVariable = Union[
+    ReadOnlyActionVariable[SimulatorT], WritableActionVariable[SimulatorT]
+]
 
 
 ###############################################################################
@@ -154,15 +160,15 @@ class ActionModel(LUMEModel, Generic[SimulatorT]):
     def __init__(
         self,
         simulator: SimulatorT,
-        action_variables: list[ActionVariable],
+        action_variables: list[ActionVariable[SimulatorT]],
     ) -> None:
         self.simulator = simulator
-        self._action_variable_by_name: dict[str, ActionVariable] = {}
+        self._action_variable_by_name: dict[str, ActionVariable[SimulatorT]] = {}
         for av in action_variables:
             self.register_action_variable(av)
 
     @property
-    def supported_variables(self) -> dict[str, ActionVariable]:
+    def supported_variables(self) -> dict[str, ActionVariable[SimulatorT]]:
         return dict(self._action_variable_by_name)
 
     def _get(self, names: list[str]) -> dict[str, Any]:
@@ -173,7 +179,9 @@ class ActionModel(LUMEModel, Generic[SimulatorT]):
 
     def _set(self, values: dict[str, Any]) -> None:
         for name, value in values.items():
-            self._action_variable_by_name[name]._set(self.simulator, value)
+            av = self._action_variable_by_name[name]
+            if isinstance(av, WritableActionMixin):
+                av._set(self.simulator, value)
 
     def reset(self) -> None:
         self._set(
@@ -184,7 +192,9 @@ class ActionModel(LUMEModel, Generic[SimulatorT]):
             }
         )
 
-    def register_action_variable(self, action_variable: ActionVariable) -> None:
+    def register_action_variable(
+        self, action_variable: ActionVariable[SimulatorT]
+    ) -> None:
         """Add an action variable to the model, replacing any with the same name.
 
         Parameters
