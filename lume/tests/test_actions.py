@@ -1,6 +1,6 @@
 import pytest
 
-from lume.actions import Action, ActionModel, ReadOnlyActionMixin, WritableActionMixin
+from lume.actions import ActionModel, ReadOnlyActionMixin, WritableActionMixin
 from lume.exceptions import ReadOnlyError
 from lume.variables.scalar import ScalarVariable
 
@@ -21,16 +21,6 @@ class MockWritableVar(WritableActionMixin, ScalarVariable):
 
     def _set(self, simulator: MockSim, value: float) -> None:
         simulator.values[self.name] = value
-
-
-class TestAction:
-    def test_is_action_instance(self):
-        var = MockReadOnlyVar(name="x", read_only=True)
-        assert isinstance(var, Action)
-
-    def test_is_variable_instance(self):
-        var = MockReadOnlyVar(name="x", read_only=True)
-        assert isinstance(var, ScalarVariable)
 
 
 class TestReadOnlyActionMixin:
