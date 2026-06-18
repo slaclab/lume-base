@@ -136,7 +136,8 @@ ActionVariable = Union[
 
 
 class ActionModel(LUMEModel, Generic[SimulatorT]):
-    """LUMEModel backed by a collection of action variables.
+    """
+    LUMEModel backed by a collection of action variables.
 
     Each entry in ``action_variables`` must be an ``Action`` instance (i.e. a
     ``Variable`` subclass that also mixes in ``ReadOnlyActionMixin`` or
@@ -148,7 +149,7 @@ class ActionModel(LUMEModel, Generic[SimulatorT]):
     simulator : SimulatorT
         The simulator object passed through to each action variable's
         ``get`` / ``set`` implementation.
-    action_variables : list[Variable]
+    action_variables : list[ActionVariable[SimulatorT]]
         The action variables managed by this model.
 
     Raises
@@ -195,12 +196,14 @@ class ActionModel(LUMEModel, Generic[SimulatorT]):
     def register_action_variable(
         self, action_variable: ActionVariable[SimulatorT]
     ) -> None:
-        """Add an action variable to the model, replacing any with the same name.
+        """
+        Add an action variable to the model, replacing any with the same name.
 
         Parameters
         ----------
-        action_variable : Variable
-            The action variable to register. Must be an ``Action`` instance.
+        action_variable : ActionVariable[SimulatorT]
+            The action variable to register. Ie a class that inherits from both a `Variable`
+            and either `ReadOnlyActionMixin` or `WritableActionMixin`.
 
         Raises
         ------
@@ -214,7 +217,8 @@ class ActionModel(LUMEModel, Generic[SimulatorT]):
         self._action_variable_by_name[action_variable.name] = action_variable
 
     def unregister_action_variable(self, name: str) -> ActionVariable[SimulatorT]:
-        """Remove an action variable from the model by name.
+        """
+        Remove an action variable from the model by name.
 
         Parameters
         ----------
