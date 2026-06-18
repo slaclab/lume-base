@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic, TypeVar, Union
 
 from pydantic import field_validator
 
@@ -10,6 +10,9 @@ from lume.model import LUMEModel
 from lume.variables import Variable
 
 SimulatorT = TypeVar("SimulatorT")
+
+###############################################################################
+# Action definitions
 
 
 class Action(ABC, Generic[SimulatorT]):
@@ -93,6 +96,39 @@ class WritableActionMixin(Action[SimulatorT], Generic[SimulatorT]):
         ...
 
 
+###############################################################################
+# Type hint stubs: these classes are used only to get correct type hints for
+# the action variable objects in ActionModel below and are not meant for use
+# outside of this module.
+
+
+class ReadOnlyActionVariable(ReadOnlyActionMixin, Variable):
+    def __init__(self, *args, **kwargs):
+        raise NotImplementedError("This is a type hinting stub")
+
+    def _get(self, simulator: SimulatorT) -> Any:
+        raise NotImplementedError("This is a type hinting stub")
+
+
+class WritableActionVariable(WritableActionMixin, Variable):
+    def __init__(self, *args, **kwargs):
+        raise NotImplementedError("This is a type hinting stub")
+
+    def _get(self, simulator: SimulatorT) -> Any:
+        raise NotImplementedError("This is a type hinting stub")
+
+    def _set(self, simulator: SimulatorT) -> Any:
+        raise NotImplementedError("This is a type hinting stub")
+
+
+# Type which will have the correct interface from user-provided variables
+ActionVariable = Union[ReadOnlyActionVariable, WritableActionVariable]
+
+
+###############################################################################
+# Model definition
+
+
 class ActionModel(LUMEModel, Generic[SimulatorT]):
     """LUMEModel backed by a collection of action variables.
 
@@ -118,15 +154,15 @@ class ActionModel(LUMEModel, Generic[SimulatorT]):
     def __init__(
         self,
         simulator: SimulatorT,
-        action_variables: list[Variable],
+        action_variables: list[ActionVariable],
     ) -> None:
         self.simulator = simulator
-        self._action_variable_by_name: dict[str, Variable] = {}
+        self._action_variable_by_name: dict[str, ActionVariable] = {}
         for av in action_variables:
             self.register_action_variable(av)
 
     @property
-    def supported_variables(self) -> dict[str, Variable]:
+    def supported_variables(self) -> dict[str, ActionVariable]:
         return dict(self._action_variable_by_name)
 
     def _get(self, names: list[str]) -> dict[str, Any]:
@@ -148,7 +184,7 @@ class ActionModel(LUMEModel, Generic[SimulatorT]):
             }
         )
 
-    def register_action_variable(self, action_variable: Variable) -> None:
+    def register_action_variable(self, action_variable: ActionVariable) -> None:
         """Add an action variable to the model, replacing any with the same name.
 
         Parameters
