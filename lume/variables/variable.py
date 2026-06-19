@@ -37,7 +37,7 @@ class Variable(BaseModel, ABC):
     """
 
     # store/serialize as string
-    model_config = ConfigDict(use_enum_values=True)
+    model_config = ConfigDict(use_enum_values=True, extra="forbid")
 
     name: str
     read_only: bool = False
