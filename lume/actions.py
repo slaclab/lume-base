@@ -96,6 +96,51 @@ class WritableActionMixin(Action[SimulatorT], Generic[SimulatorT]):
         ...
 
 
+class AffineTransformActionMixin(Action[SimulatorT], Generic[SimulatorT]):
+    """
+    Mixin for variable-actions that apply an affine transformation to the value on set.
+
+    Mix into a ``Action`` subclass.
+    """
+    scale: float
+    offset: float
+
+    def _get(self, simulator: SimulatorT) -> Any:
+        """Return the current value from ``simulator`` after applying the affine transformation.
+
+        Parameters
+        ----------
+        simulator : SimulatorT
+            The simulator to read from.
+
+        Returns
+        -------
+        Any
+            The current value of this variable in the simulator after applying the affine transformation.
+        """
+        raw_value = super()._get(simulator)
+        return (raw_value - self.offset) / self.scale
+    
+    def _set(self, simulator: SimulatorT, value: Any) -> None:
+        """Write ``value`` to ``simulator`` after applying the inverse affine transformation.
+
+        Parameters
+        ----------
+        simulator : SimulatorT
+            The simulator to write to.
+        value : Any
+            The value to assign to this variable in the simulator after applying the inverse affine transformation.
+        """
+        transformed_value = value * self.scale + self.offset
+
+        try:
+            super()._set(simulator, transformed_value)
+        except AttributeError:
+            raise NotImplementedError(
+                f"{self.__class__.__name__} does not implement _set, cannot apply affine transformation"
+            )
+
+
 ###############################################################################
 # Type hint stubs: these classes are used only to get correct type hints for
 # the action variable objects in ActionModel below and are not meant for use
