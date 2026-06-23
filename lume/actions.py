@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Generic, TypeVar, Union
+from typing import Any, Generic, Optional, TypeVar, Union
 
 from pydantic import field_validator
 
@@ -96,17 +96,18 @@ class WritableActionMixin(Action[SimulatorT], Generic[SimulatorT]):
         ...
 
 
-class AffineTransformActionMixin(Action[SimulatorT], Generic[SimulatorT]):
+class AffineTransformMixin(Action[SimulatorT], Generic[SimulatorT]):
     """
-    Mixin for variable-actions that apply an affine transformation to the value on set.
+    Mixin for variable-actions that apply an affine transformation to the value on set 
+    and undo the transformation on get. Defaults to the identity transformation (scale=1, offset=0).
 
     Mix into a ``Action`` subclass.
     """
-    scale: float
-    offset: float
+    scale: Optional[float] = 1.0
+    offset: Optional[float] = 0.0
 
     def _get(self, simulator: SimulatorT) -> Any:
-        """Return the current value from ``simulator`` after applying the affine transformation.
+        """Return the current value from ``simulator`` after undoing the affine transformation.
 
         Parameters
         ----------
@@ -116,20 +117,20 @@ class AffineTransformActionMixin(Action[SimulatorT], Generic[SimulatorT]):
         Returns
         -------
         Any
-            The current value of this variable in the simulator after applying the affine transformation.
+            The current value of this variable in the simulator after undoing the affine transformation.
         """
         raw_value = super()._get(simulator)
         return (raw_value - self.offset) / self.scale
     
     def _set(self, simulator: SimulatorT, value: Any) -> None:
-        """Write ``value`` to ``simulator`` after applying the inverse affine transformation.
+        """Write ``value`` to ``simulator`` after applying the affine transformation.
 
         Parameters
         ----------
         simulator : SimulatorT
             The simulator to write to.
         value : Any
-            The value to assign to this variable in the simulator after applying the inverse affine transformation.
+            The value to assign to this variable in the simulator after applying the affine transformation.
         """
         transformed_value = value * self.scale + self.offset
 
