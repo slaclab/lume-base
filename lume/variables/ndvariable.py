@@ -64,7 +64,7 @@ class NDVariable(Variable):
     model_config = ConfigDict(arbitrary_types_allowed=True, validate_assignment=True)
 
     shape: Tuple[int, ...]
-    dtype: np.dtype = np.float64
+    dtype: np.dtype = np.dtype(np.float64)
     default_value: Optional[NDArray] = None
     unit: Optional[str] = None
 
