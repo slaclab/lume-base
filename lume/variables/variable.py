@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, computed_field, model_validator
 
 
 class ConfigEnum(str, Enum):
@@ -62,10 +62,18 @@ class Variable(BaseModel, ABC):
             config = ConfigEnum(config)
         return config
 
+    @model_validator(mode="before")
+    @classmethod
+    def _drop_variable_class(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            data = {k: v for k, v in data.items() if k != "variable_class"}
+        return data
+
+    @computed_field
+    @property
+    def variable_class(self) -> str:
+        return self.__class__.__name__
+
     @abstractmethod
     def validate_value(self, value: Any, config: ConfigEnum = None):
         pass
-
-    def model_dump(self, **kwargs) -> dict[str, Any]:
-        config = super().model_dump(**kwargs)
-        return {"variable_class": self.__class__.__name__} | config
