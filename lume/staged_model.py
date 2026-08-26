@@ -39,6 +39,11 @@ class StagedModel(LUMEModel):
 
     def __init__(self, lume_model_instances: list[LUMEModel]):
         """
+        Initialize the `StagedModel` with a list of LUMEModel instances.
+
+        To ensure that the model is accurate after instantiation, this method will run a single
+        start-to-end evaluation to propagate initial particles through all stages.
+
         Parameters
         ----------
         lume_model_instances: list[LUMEModel]
@@ -47,6 +52,27 @@ class StagedModel(LUMEModel):
         super().__init__()
         self.validate_lume_model_instances(lume_model_instances)
         self.lume_model_instances = lume_model_instances
+        self.run_start_to_end_propagation()
+
+    def run_start_to_end_propagation(self) -> None:
+        """Run a single start-to-end propagation across all staged models."""
+
+        # Collect initial values for the first writable variable
+        # in each model to trigger updates across all models.
+        initial_values = {}
+        for model in self.lume_model_instances:
+            first_writable_name = next(
+                (
+                    name
+                    for name, variable in model.supported_variables.items()
+                    if not variable.read_only
+                ),
+                None,
+            )
+            if first_writable_name is not None:
+                initial_values.update(model.get([first_writable_name]))
+
+        self.set(initial_values)
 
     @classmethod
     def validate_lume_model_instances(cls, models: list[LUMEModel]):
@@ -95,6 +121,8 @@ class StagedModel(LUMEModel):
 
     def _set(self, values: dict[str, Any]) -> None:
         """
+        Set variable values across the staged models.
+
         Parameters
         ----------
         values: dict[str, Any]
@@ -118,3 +146,4 @@ class StagedModel(LUMEModel):
     def reset(self):
         for model in self.lume_model_instances:
             model.reset()
+        self.run_start_to_end_propagation()

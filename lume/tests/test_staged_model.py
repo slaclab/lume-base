@@ -137,10 +137,27 @@ def test_staged_model_supported_variables_union() -> None:
     assert set(model.supported_variables.keys()) == {"source_phase", "transport_scale"}
 
 
+def test_staged_model_initialization_runs_full_stage_propagation() -> None:
+    beam_source = BeamSourceTestModel()
+    beam_transport = BeamTransportTestModel()
+
+    new_beam = make_test_particle_group(x_offset=7.5e-4)
+    beam_source.initial_particles = new_beam
+
+    StagedModel([beam_source, beam_transport])
+
+    assert np.allclose(beam_source.final_particles.x, new_beam.x)
+    assert np.allclose(beam_transport.initial_particles.x, new_beam.x)
+    assert beam_source.set_call_count == 1
+    assert beam_transport.set_call_count == 1
+
+
 def test_staged_model_propagates_beam_to_next_stage() -> None:
     beam_source = BeamSourceTestModel()
     beam_transport = BeamTransportTestModel()
     model = StagedModel([beam_source, beam_transport])
+    source_calls_before = beam_source.set_call_count
+    transport_calls_before = beam_transport.set_call_count
 
     new_beam = make_test_particle_group(x_offset=7.5e-4)
     beam_source.initial_particles = new_beam
@@ -148,20 +165,22 @@ def test_staged_model_propagates_beam_to_next_stage() -> None:
 
     assert np.allclose(beam_source.final_particles.x, new_beam.x)
     assert np.allclose(beam_transport.initial_particles.x, new_beam.x)
-    assert beam_source.set_call_count == 1
-    assert beam_transport.set_call_count == 0
+    assert beam_source.set_call_count == source_calls_before + 1
+    assert beam_transport.set_call_count == transport_calls_before
 
 
 def test_staged_model_only_updates_later_stage_when_requested() -> None:
     beam_source = BeamSourceTestModel()
     beam_transport = BeamTransportTestModel()
     model = StagedModel([beam_source, beam_transport])
+    source_calls_before = beam_source.set_call_count
+    transport_calls_before = beam_transport.set_call_count
 
     model.set({"transport_scale": 2.5})
 
     assert beam_transport.get("transport_scale") == 2.5
-    assert beam_source.set_call_count == 0
-    assert beam_transport.set_call_count == 1
+    assert beam_source.set_call_count == source_calls_before
+    assert beam_transport.set_call_count == transport_calls_before + 1
 
 
 def test_staged_model_beam_always_propagates() -> None:
@@ -176,6 +195,28 @@ def test_staged_model_beam_always_propagates() -> None:
     # Even when only transport_scale changes, source final_particles propagate to transport
     model.set({"transport_scale": 2.5})
     assert np.allclose(beam_transport.initial_particles.x, new_beam.x)
+
+
+def test_staged_model_reset_runs_full_stage_propagation() -> None:
+    beam_source = BeamSourceTestModel()
+    beam_transport = BeamTransportTestModel()
+    model = StagedModel([beam_source, beam_transport])
+
+    source_calls_before = beam_source.set_call_count
+    transport_calls_before = beam_transport.set_call_count
+
+    new_beam = make_test_particle_group(x_offset=7.5e-4)
+    beam_source.initial_particles = new_beam
+    beam_transport.initial_particles = make_test_particle_group(x_offset=-7.5e-4)
+
+    assert not np.allclose(beam_transport.initial_particles.x, new_beam.x)
+
+    model.reset()
+
+    assert np.allclose(beam_source.final_particles.x, new_beam.x)
+    assert np.allclose(beam_transport.initial_particles.x, new_beam.x)
+    assert beam_source.set_call_count == source_calls_before + 1
+    assert beam_transport.set_call_count == transport_calls_before + 1
 
 
 def test_staged_model_requires_final_particles_for_non_last_stage() -> None:
