@@ -31,7 +31,7 @@ class FinalParticlesMixIn(ABC):
     def final_particles(self) -> ParticleGroup: ...
 
 
-class StagedModel(LUMEModel):
+class StagedModel(LUMEModel, InitialParticlesMixIn, FinalParticlesMixIn):
     """
     Composes multiple LUMEModel instances in sequence, passing final particles
     from each stage as initial particles to the next.
@@ -144,6 +144,33 @@ class StagedModel(LUMEModel):
 
             if isinstance(model, FinalParticlesMixIn):
                 incoming_particles = model.final_particles
+
+    @property
+    def initial_particles(self):
+        first_model = self.lume_model_instances[0]
+        if not isinstance(first_model, InitialParticlesMixIn):
+            raise AttributeError(
+                "Cannot access initial_particles because the first model does not implement InitialParticlesMixIn."
+            )
+        return first_model.initial_particles
+
+    @initial_particles.setter
+    def initial_particles(self, value: ParticleGroup):
+        first_model = self.lume_model_instances[0]
+        if not isinstance(first_model, InitialParticlesMixIn):
+            raise AttributeError(
+                "Cannot set initial_particles because the first model does not implement InitialParticlesMixIn."
+            )
+        first_model.initial_particles = value
+
+    @property
+    def final_particles(self):
+        last_model = self.lume_model_instances[-1]
+        if not isinstance(last_model, FinalParticlesMixIn):
+            raise AttributeError(
+                "Cannot access final_particles because the last model does not implement FinalParticlesMixIn."
+            )
+        return last_model.final_particles
 
     def reset(self):
         for model in self.lume_model_instances:

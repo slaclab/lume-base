@@ -171,6 +171,39 @@ def test_staged_model_supported_variables_union() -> None:
     assert set(model.supported_variables.keys()) == {"source_phase", "transport_scale"}
 
 
+
+def test_staged_model_initialization_runs_full_stage_propagation() -> None:
+    beam_source = BeamSourceTestModel()
+    beam_transport = BeamTransportTestModel()
+
+    new_beam = make_test_particle_group(x_offset=7.5e-4)
+    beam_source.initial_particles = new_beam
+
+    StagedModel([beam_source, beam_transport])
+
+    assert np.allclose(beam_source.final_particles.x, new_beam.x)
+    assert np.allclose(beam_transport.initial_particles.x, new_beam.x)
+    assert beam_source.set_call_count == 1
+    assert beam_transport.set_call_count == 1
+
+
+def test_staged_model_initial_and_final_particles_properties() -> None:
+    beam_source = BeamSourceTestModel()
+    beam_transport = BeamTransportTestModel()
+    model = StagedModel([beam_source, beam_transport])
+
+    new_beam = make_test_particle_group(x_offset=9.0e-4)
+    model.initial_particles = new_beam
+
+    assert np.allclose(model.initial_particles.x, new_beam.x)
+    assert np.allclose(beam_source.initial_particles.x, new_beam.x)
+
+    model.set({"source_phase": 2.0, "transport_scale": 3.0})
+
+    assert np.allclose(model.final_particles.x, new_beam.x)
+    assert np.allclose(beam_transport.final_particles.x, new_beam.x)
+
+
 def test_staged_model_propagates_beam_to_next_stage() -> None:
     beam_source = BeamSourceTestModel()
     beam_transport = BeamTransportTestModel()
@@ -250,3 +283,61 @@ def test_staged_model_rejects_conflicting_variable_names() -> None:
 
     with pytest.raises(ValueError, match="source_phase"):
         StagedModel([model_a, model_b])
+
+
+def test_staged_model_raises_when_first_model_lacks_initial_particles() -> None:
+    class NoInitialParticlesModel(LUMEModel):
+        @property
+        def supported_variables(self):
+            return {
+                "x": ScalarVariable(name="x", default_value=0.0, read_only=False),
+            }
+
+        def _get(self, names):
+            return {name: 0.0 for name in names}
+
+        def _set(self, values):
+            pass
+
+        def reset(self):
+            pass
+
+    model = StagedModel([NoInitialParticlesModel()])
+
+    with pytest.raises(
+        AttributeError,
+        match="Cannot access initial_particles because the first model does not implement InitialParticlesMixIn",
+    ):
+        _ = model.initial_particles
+
+    with pytest.raises(
+        AttributeError,
+        match="Cannot set initial_particles because the first model does not implement InitialParticlesMixIn",
+    ):
+        model.initial_particles = make_test_particle_group()
+
+
+def test_staged_model_raises_when_last_model_lacks_final_particles() -> None:
+    class NoFinalParticlesModel(LUMEModel):
+        @property
+        def supported_variables(self):
+            return {
+                "x": ScalarVariable(name="x", default_value=0.0, read_only=False),
+            }
+
+        def _get(self, names):
+            return {name: 0.0 for name in names}
+
+        def _set(self, values):
+            pass
+
+        def reset(self):
+            pass
+
+    model = StagedModel([NoFinalParticlesModel()])
+
+    with pytest.raises(
+        AttributeError,
+        match="Cannot access final_particles because the last model does not implement FinalParticlesMixIn",
+    ):
+        _ = model.final_particles
