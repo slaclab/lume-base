@@ -47,6 +47,8 @@ class LUMEModel(ABC):
             Dictionary of variable names and their corresponding values.
 
         """
+        if not isinstance(names, list):
+            raise TypeError("names must be a list of strings.")
 
         # Validate input names
         for name in names:
