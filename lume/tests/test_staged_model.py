@@ -220,8 +220,7 @@ def test_staged_model_beam_always_propagates() -> None:
     assert np.allclose(beam_transport.initial_particles.x, new_beam.x)
 
 
-def test_staged_model_requires_final_particles_for_non_last_stage() -> None:
-    class NoFinalParticlesModel(LUMEModel):
+class NoParticlesModel(LUMEModel):
         @property
         def supported_variables(self):
             return {"x": ScalarVariable(name="x", default_value=0.0, read_only=False)}
@@ -235,31 +234,14 @@ def test_staged_model_requires_final_particles_for_non_last_stage() -> None:
         def reset(self):
             pass
 
+def test_staged_model_requires_final_particles_for_non_last_stage() -> None:
     with pytest.raises(ValueError, match="FinalParticlesMixIn"):
-        StagedModel([NoFinalParticlesModel(), BeamTransportTestModel()])
+        StagedModel([NoParticlesModel(), BeamTransportTestModel()])
 
 
 def test_staged_model_requires_initial_particles_after_first_stage() -> None:
-    class NoInitialParticlesModel(LUMEModel, FinalParticlesMixIn):
-        @property
-        def supported_variables(self):
-            return {"x": ScalarVariable(name="x", default_value=0.0, read_only=False)}
-
-        @property
-        def final_particles(self):
-            return make_test_particle_group()
-
-        def _get(self, names):
-            return {name: 0.0 for name in names}
-
-        def _set(self, values):
-            pass
-
-        def reset(self):
-            pass
-
     with pytest.raises(ValueError, match="InitialParticlesMixIn"):
-        StagedModel([BeamSourceTestModel(), NoInitialParticlesModel()])
+        StagedModel([BeamSourceTestModel(), NoParticlesModel()])
 
 
 def test_staged_model_rejects_conflicting_variable_names() -> None:
