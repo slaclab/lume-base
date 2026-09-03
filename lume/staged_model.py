@@ -41,38 +41,37 @@ class StagedModel(LUMEModel):
         """
         Initialize the `StagedModel` with a list of LUMEModel instances.
 
-        To ensure that the model is accurate after instantiation, this method will run a single
-        start-to-end evaluation to propagate initial particles through all stages.
-
         Parameters
         ----------
         lume_model_instances: list[LUMEModel]
             Ordered list of LUMEModel instances to stage.
         """
         super().__init__()
+
+        self._is_init = (
+            False  # Flag to indicate if the model has been run start to end once
+        )
         self.validate_lume_model_instances(lume_model_instances)
         self.lume_model_instances = lume_model_instances
-        self.run_start_to_end_propagation()
 
-    def run_start_to_end_propagation(self) -> None:
+    def coerce_evaluated_once(self) -> None:
+        """Run the model at least once if it hasn't been run already."""
+        if not self._is_init:
+            self.refresh()
+            self._is_init = True
+
+    def refresh(self) -> None:
         """Run a single start-to-end propagation across all staged models."""
 
-        # Collect initial values for the first writable variable
-        # in each model to trigger updates across all models.
-        initial_values = {}
-        for model in self.lume_model_instances:
-            first_writable_name = next(
-                (
-                    name
-                    for name, variable in model.supported_variables.items()
-                    if not variable.read_only
-                ),
-                None,
-            )
-            if first_writable_name is not None:
-                initial_values.update(model.get([first_writable_name]))
+        incoming_particles = None
+        for i, model in enumerate(self.lume_model_instances):
+            if i > 0 and incoming_particles is not None:
+                model.initial_particles = incoming_particles
 
-        self.set(initial_values)
+            model.set({})
+
+            if isinstance(model, FinalParticlesMixIn):
+                incoming_particles = model.final_particles
 
     @classmethod
     def validate_lume_model_instances(cls, models: list[LUMEModel]):
@@ -112,6 +111,8 @@ class StagedModel(LUMEModel):
         }
 
     def _get(self, names: list[str]) -> dict[str, Any]:
+        self.coerce_evaluated_once()
+
         values = {}
         for model in self.lume_model_instances:
             model_names = [n for n in names if n in model.supported_variables]
@@ -128,6 +129,7 @@ class StagedModel(LUMEModel):
         values: dict[str, Any]
             Variable names and values to set across the staged models.
         """
+        self.coerce_evaluated_once()
         incoming_particles = None
         for i, model in enumerate(self.lume_model_instances):
             model_values = {
@@ -146,4 +148,4 @@ class StagedModel(LUMEModel):
     def reset(self):
         for model in self.lume_model_instances:
             model.reset()
-        self.run_start_to_end_propagation()
+        self._is_init = False
